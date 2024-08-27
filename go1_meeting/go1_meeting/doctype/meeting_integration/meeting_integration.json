@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-08-23 10:37:44.252154",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "platform",
+  "client_id",
+  "client_secret",
+  "tenant_id",
+  "meeting_participants"
+ ],
+ "fields": [
+  {
+   "fieldname": "platform",
+   "fieldtype": "Select",
+   "label": "Platform",
+   "options": "Teams\nGoogle Meet"
+  },
+  {
+   "fieldname": "client_id",
+   "fieldtype": "Data",
+   "label": "Client Id"
+  },
+  {
+   "fieldname": "client_secret",
+   "fieldtype": "Data",
+   "label": "Client Secret"
+  },
+  {
+   "fieldname": "tenant_id",
+   "fieldtype": "Data",
+   "label": "Tenant Id"
+  },
+  {
+   "fieldname": "meeting_participants",
+   "fieldtype": "Table",
+   "label": "Meeting participants",
+   "options": "Meeting Participants"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-08-23 15:42:18.883843",
+ "modified_by": "Administrator",
+ "module": "Go1 Meeting",
+ "name": "Meeting Integration",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
