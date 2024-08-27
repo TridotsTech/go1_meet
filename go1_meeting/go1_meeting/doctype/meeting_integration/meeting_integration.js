@@ -6,7 +6,7 @@ frappe.ui.form.on("Meeting Integration", {
         let platform = frm.doc.platform
         frm.add_custom_button(`Create ${platform} Meeting`, function () {
             frappe.call({
-                method: "go1_meeting.go1_meeting.integration.validation.validate_user",
+                method: "go1_meeting.go1_meeting.integration.validation._redirect_uri",
                 args: {
                     doc: frm.doc
                 },

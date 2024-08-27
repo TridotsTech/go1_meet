@@ -70,3 +70,33 @@ def create_access_token_from_refresh_token(refresh_token):
 
     token_response = msal_app.acquire_token_by_refresh_token(refresh_token, scopes=scopes)
     return token_response
+
+@frappe.whitelist()
+def _redirect_uri():
+    client_id , client_secret , tenant_id , scopes = get_teams_credentials()
+    authority = f"https://login.microsoftonline.com/{tenant_id}"
+
+    # Initialize MSAL app
+    msal_app = msal.ClientApplication(client_id, authority=authority, client_credential=client_secret)
+    redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
+    frappe.log_error("redirect_uri",redirect_uri)
+    # Generate authorization URL
+    auth_url = msal_app.get_authorization_request_url(scopes, redirect_uri=redirect_uri)
+    frappe.log_error("auth_url",auth_url)
+    frappe.local.response["type"] = "redirect"
+    frappe.local.response["location"] = "/app/d"
+
+@frappe.whitelist(allow_guest = True)
+def teams_oauth_calback():
+    client_id , client_secret , tenant_id , scopes = get_teams_credentials()
+    authority = f"https://login.microsoftonline.com/{tenant_id}"
+    redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
+    frappe.log_error("redirect_uri",redirect_uri)
+    
+def get_teams_credentials():
+    cred_doc = frappe.get_doc("Meeting Integration",{"platform":"Teams"})
+    client_id = cred_doc.client_id
+    client_secret = cred_doc.client_secret
+    tenant_id = cred_doc.tenant_id
+    scopes = ['User.Read', 'OnlineMeetings.ReadWrite']
+    return client_id,client_secret,tenant_id,scopes
