@@ -72,10 +72,11 @@ def create_access_token_from_refresh_token(refresh_token):
     return token_response
 
 @frappe.whitelist()
-def _redirect_uri():
+def _redirect_uri(doc):
+    doc = json.loads(doc)
     client_id , client_secret , tenant_id , scopes = get_teams_credentials()
     authority = f"https://login.microsoftonline.com/{tenant_id}"
-
+    frappe.log_error("doc",doc['name'])
     # Initialize MSAL app
     msal_app = msal.ClientApplication(client_id, authority=authority, client_credential=client_secret)
     redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
@@ -85,7 +86,7 @@ def _redirect_uri():
     frappe.log_error("auth_url",auth_url)
     # frappe.local.response["type"] = "redirect"
     # frappe.local.response["location"] = auth_url
-    return auth_url
+    # return auth_url
 
 @frappe.whitelist(allow_guest = True)
 def teams_oauth_calback(code = None):
@@ -105,8 +106,13 @@ def teams_oauth_calback(code = None):
         scopes=scopes,
         redirect_uri=redirect_uri
     )
+    latest_doc = frappe.get_last_doc("Meeting Integration",{"platform":"Teams","owner":frappe.session.user})
+    frappe.log_error("last doc",latest_doc )
+    frappe.log_error("last d name",latest_doc.name)
     # redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
     frappe.log_error("token resp from microsoft",token_response)
+    frappe.local.response["type"] = "redirect"
+    frappe.local.response["location"] = f"/app/meeting-integration/{latest_doc.name}"
     
 def get_teams_credentials():
     cred_doc = frappe.get_doc("Meeting Integration",{"platform":"Teams"})

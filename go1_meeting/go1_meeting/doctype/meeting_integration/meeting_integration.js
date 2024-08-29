@@ -14,7 +14,7 @@ frappe.ui.form.on("Meeting Integration", {
                 freeze_message: "Authenticating user",
                 callback(r) {
                     if (r.message) {
-                        window.location.href = r.message
+                        // window.location.href = r.message
                     }
                 }
             })
