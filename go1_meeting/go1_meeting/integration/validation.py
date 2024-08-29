@@ -124,6 +124,7 @@ def get_teams_credentials():
     return client_id,client_secret,tenant_id,scopes
 
 def set_token_response(token_response):
+    frappe.log_error("token_response set token",token_response)
     cred = frappe.get_doc({
             "doctype": "User Platform Credentials",
             "user":frappe.session.user,
@@ -132,3 +133,4 @@ def set_token_response(token_response):
             "refresh_token":token_response['refresh_token']
         })
     cred.insert()
+    frappe.db.commit()
