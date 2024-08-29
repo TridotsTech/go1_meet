@@ -92,6 +92,7 @@ def teams_oauth_calback(code = None):
     if not code:
         frappe.throw("Authorization code not found")
     client_id , client_secret , tenant_id , scopes = get_teams_credentials()
+    redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
     authority = f"https://login.microsoftonline.com/{tenant_id}"
     frappe.log_error("code",code)
     msal_app = msal.ConfidentialClientApplication(
