@@ -83,15 +83,29 @@ def _redirect_uri():
     # Generate authorization URL
     auth_url = msal_app.get_authorization_request_url(scopes, redirect_uri=redirect_uri)
     frappe.log_error("auth_url",auth_url)
-    frappe.local.response["type"] = "redirect"
-    frappe.local.response["location"] = "/app/d"
+    # frappe.local.response["type"] = "redirect"
+    # frappe.local.response["location"] = auth_url
+    return auth_url
 
 @frappe.whitelist(allow_guest = True)
-def teams_oauth_calback():
+def teams_oauth_calback(code = None):
+    if not code:
+        frappe.throw("Authorization code not found")
     client_id , client_secret , tenant_id , scopes = get_teams_credentials()
     authority = f"https://login.microsoftonline.com/{tenant_id}"
-    redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
-    frappe.log_error("redirect_uri",redirect_uri)
+    frappe.log_error("code",code)
+    msal_app = msal.ConfidentialClientApplication(
+        client_id,
+        authority=authority,
+        client_credential=client_secret
+    )
+    token_response = msal_app.acquire_token_by_authorization_code(
+        code=code,
+        scopes=scopes,
+        redirect_uri=redirect_uri
+    )
+    # redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
+    frappe.log_error("token resp from microsoft",token_response)
     
 def get_teams_credentials():
     cred_doc = frappe.get_doc("Meeting Integration",{"platform":"Teams"})
