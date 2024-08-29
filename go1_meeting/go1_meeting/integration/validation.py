@@ -86,7 +86,7 @@ def _redirect_uri(doc):
     frappe.log_error("auth_url",auth_url)
     # frappe.local.response["type"] = "redirect"
     # frappe.local.response["location"] = auth_url
-    # return auth_url
+    return auth_url
 
 @frappe.whitelist(allow_guest = True)
 def teams_oauth_calback(code = None):
@@ -109,10 +109,11 @@ def teams_oauth_calback(code = None):
     latest_doc = frappe.get_last_doc("Meeting Integration",{"platform":"Teams","owner":frappe.session.user})
     frappe.log_error("last doc",latest_doc )
     frappe.log_error("last d name",latest_doc.name)
+    set_token_response(token_response)
     # redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
     frappe.log_error("token resp from microsoft",token_response)
     frappe.local.response["type"] = "redirect"
-    frappe.local.response["location"] = f"/app/meeting-integration/{latest_doc.name}"
+    frappe.local.response["location"] = f"/app/meeting-integration"
     
 def get_teams_credentials():
     cred_doc = frappe.get_doc("Meeting Integration",{"platform":"Teams"})
@@ -121,3 +122,13 @@ def get_teams_credentials():
     tenant_id = cred_doc.tenant_id
     scopes = ['User.Read', 'OnlineMeetings.ReadWrite']
     return client_id,client_secret,tenant_id,scopes
+
+def set_token_response(token_response):
+    cred = frappe.get_doc({
+            "doctype": "User Platform Credentials",
+            "user":frappe.session.user,
+            "platform":"Teams",
+            "access_token":token_response['access_token'],
+            "refresh_token":token_response['refresh_token']
+        })
+    cred.insert()
