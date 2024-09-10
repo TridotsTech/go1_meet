@@ -144,7 +144,7 @@ def zoom_oauth_callback(code = None):
     }
     response = requests.post(token_url, headers=headers, data=data)
     frappe.log_error('response sts code',response.status_code)
-    frappe.log_error("zoom access token",response.json())
+    frappe.log_error("zoom access token",response.text)
     if response.status_code == 200:
         token_data = response.json()
         access_token = token_data.get("access_token")
