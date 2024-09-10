@@ -134,7 +134,7 @@ def zoom_oauth_callback(code = None):
     token_url = "https://zoom.us/oauth/token"
     redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.zoom_oauth_callback')
     headers = {
-        "Authorization":"Basic "+base64.b64encode(f"{client_id}:{client_secret}".encode()).decode(),
+        "Authorization": "Basic " + base64.b64encode(f"{client_id}:{client_secret}".encode()).decode(),
         "Content-Type": "application/x-www-form-urlencoded"
     }
     data = {
