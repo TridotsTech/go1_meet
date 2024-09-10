@@ -122,15 +122,17 @@ def teams_oauth_calback(code = None):
 
 @frappe.whitelist(allow_guest = True) 
 def zoom_oauth_callback(code = None):
-    code = frappe.form_dict.get("code")
+    dict_code = frappe.form_dict.get("code")
     state = frappe.form_dict.get("state")
     frappe.log_error("code",code)
+    frappe.log_error("dict code",dict_code)
     if state:
         query_state = urllib.parse.parse_qs(state)
         doc_name = query_state.get("name")[0]
     zoom_credentials = frappe.get_doc("Meeting Integration",{"platform":"Zoom"})
     client_id = zoom_credentials.client_id
     client_secret = zoom_credentials.get_password("client_secret")
+    frappe.log_error("client id ans secret",[client_id,client_secret])
     token_url = "https://zoom.us/oauth/token"
     redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.zoom_oauth_callback')
     headers = {
@@ -142,7 +144,7 @@ def zoom_oauth_callback(code = None):
         "code":code,
         "redirect_uri":redirect_uri
     }
-    response = requests.post(token_url, headers=headers, data=data)
+    response = requests.post(token_url, headers=headers, json = data)
     frappe.log_error('response sts code',response.status_code)
     frappe.log_error("zoom access token",response.text)
     if response.status_code == 200:
