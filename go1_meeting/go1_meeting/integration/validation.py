@@ -121,9 +121,10 @@ def teams_oauth_calback(code = None):
     frappe.local.response["location"] = f"/app/meeting-integration"
 
 @frappe.whitelist(allow_guest = True) 
-def zoom_oauth_callback():
+def zoom_oauth_callback(code = None):
     code = frappe.form_dict.get("code")
     state = frappe.form_dict.get("state")
+    frappe.log_error("code",code)
     if state:
         query_state = urllib.parse.parse_qs(state)
         doc_name = query_state.get("name")[0]
@@ -142,9 +143,10 @@ def zoom_oauth_callback():
         "redirect_uri":redirect_uri
     }
     response = requests.post(token_url, headers=headers, data=data)
+    frappe.log_error('response sts code',response.status_code)
+    frappe.log_error("zoom access token",response.json())
     if response.status_code == 200:
         token_data = response.json()
-        frappe.log_error("zoom access token",token_data)
         access_token = token_data.get("access_token")
         refresh_token = token_data.get("refresh_token")
         frappe.local.response["type"] = "redirect"
