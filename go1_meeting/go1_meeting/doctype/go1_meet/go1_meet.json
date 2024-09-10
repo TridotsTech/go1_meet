@@ -1,0 +1,165 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:GO1-{platform}-MEETING-{#####}",
+ "creation": "2024-09-03 19:39:40.074125",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "platform",
+  "subject",
+  "status",
+  "column_break_nypf",
+  "is_record_automatically",
+  "is_online_meeting",
+  "url",
+  "section_break_yxkw",
+  "from",
+  "column_break_ibhx",
+  "to",
+  "section_break_vbrt",
+  "participants",
+  "external_participants",
+  "meeting_id",
+  "event_id",
+  "attendance_tab",
+  "attendance"
+ ],
+ "fields": [
+  {
+   "fieldname": "platform",
+   "fieldtype": "Select",
+   "label": "Platform",
+   "options": "Teams\nGoogle Meet\nZoom\nWhereBy"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "label": "Subject"
+  },
+  {
+   "fieldname": "section_break_yxkw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "from",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ibhx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "To",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_vbrt",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "participants",
+   "fieldtype": "Table",
+   "label": "Participants",
+   "options": "Meeting Participants",
+   "reqd": 1
+  },
+  {
+   "fieldname": "external_participants",
+   "fieldtype": "Table",
+   "label": "External Participants",
+   "options": "Meeting External Participants"
+  },
+  {
+   "fieldname": "column_break_nypf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "url",
+   "fieldtype": "Small Text",
+   "label": "URL",
+   "options": "URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "meeting_id",
+   "fieldtype": "Small Text",
+   "label": "Meeting Id"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_record_automatically",
+   "fieldtype": "Check",
+   "label": "Is Record Automatically",
+   "read_only_depends_on": "eval:doc.url"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_online_meeting",
+   "fieldtype": "Check",
+   "label": "Is Online Meeting",
+   "read_only_depends_on": "eval:doc.url"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Scheduled\nCancelled"
+  },
+  {
+   "fieldname": "event_id",
+   "fieldtype": "Small Text",
+   "label": "Event Id"
+  },
+  {
+   "fieldname": "attendance_tab",
+   "fieldtype": "Tab Break",
+   "label": "Attendance"
+  },
+  {
+   "fieldname": "attendance",
+   "fieldtype": "HTML",
+   "label": "attendance"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-09-07 20:00:58.367999",
+ "modified_by": "Administrator",
+ "module": "Go1 Meeting",
+ "name": "Go1 Meet",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Green",
+   "title": "Scheduled"
+  },
+  {
+   "color": "Red",
+   "title": "Cancelled"
+  }
+ ]
+}

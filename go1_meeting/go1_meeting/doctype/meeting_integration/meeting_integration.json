@@ -9,14 +9,16 @@
   "client_id",
   "client_secret",
   "tenant_id",
-  "meeting_participants"
+  "column_break_uewp",
+  "user_auth",
+  "admin_auth"
  ],
  "fields": [
   {
    "fieldname": "platform",
    "fieldtype": "Select",
    "label": "Platform",
-   "options": "Teams\nGoogle Meet"
+   "options": "Teams\nZoom\nGoogle Meet"
   },
   {
    "fieldname": "client_id",
@@ -25,24 +27,37 @@
   },
   {
    "fieldname": "client_secret",
-   "fieldtype": "Data",
+   "fieldtype": "Password",
    "label": "Client Secret"
   },
   {
+   "depends_on": "eval:doc.platform==\"Teams\"",
    "fieldname": "tenant_id",
    "fieldtype": "Data",
    "label": "Tenant Id"
   },
   {
-   "fieldname": "meeting_participants",
-   "fieldtype": "Table",
-   "label": "Meeting participants",
-   "options": "Meeting Participants"
+   "fieldname": "column_break_uewp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "fieldname": "user_auth",
+   "fieldtype": "Check",
+   "label": "User based authentication"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "fieldname": "admin_auth",
+   "fieldtype": "Check",
+   "label": "Admin based authentication"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-23 15:42:18.883843",
+ "modified": "2024-09-10 15:56:16.437288",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Meeting Integration",

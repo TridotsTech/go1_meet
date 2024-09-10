@@ -1,29 +1,36 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2024-08-23 15:34:48.794177",
+ "creation": "2024-09-03 19:45:49.726148",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "user"
+  "attendee_name",
+  "email"
  ],
  "fields": [
   {
-   "fieldname": "user",
-   "fieldtype": "Link",
+   "fieldname": "email",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "User",
-   "options": "User"
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "attendee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-03 19:45:18.886246",
+ "modified": "2024-09-07 12:11:30.949297",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
- "name": "Meeting Participants",
+ "name": "Meeting External Participants",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",
