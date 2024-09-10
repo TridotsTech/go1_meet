@@ -100,7 +100,7 @@ frappe.ui.form.on("Go1 Meet", {
                         if (r.message) {
                             console.log(r.message)
                             if (r.message.status == "not_authorized") {
-                                window.location.href = r.message
+                                window.location.href = r.message.message
                             } else if (r.message.status == "authorized") {
                                 frappe.call({
                                     method: 'go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.create_meeting',
