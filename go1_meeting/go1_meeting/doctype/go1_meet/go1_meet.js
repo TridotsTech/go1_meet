@@ -3,6 +3,12 @@
 
 frappe.ui.form.on("Go1 Meet", {
     refresh(frm) {
+        const searchParam = new URLSearchParams(window.location.search)
+        console.log(searchParam.has("state"))
+        if(searchParam.has("state")){
+            console.log("working...")
+        }
+        console.log(searchParam.get("state"))
         //Attendance API Call
         if (frm.doc.url && frm.doc.platform =="Teams" && frm.doc.status != "Cancelled") {
             frappe.call({
