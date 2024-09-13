@@ -155,7 +155,9 @@ def zoom_oauth_callback(code = None):
         frappe.local.response["location"] = f"/app/app/go1-meet/{doc_name}"
 
 @frappe.whitelist(allow_guest = True)
-def google_oauth_callback(code = None):
+def google_oauth_callback():
+    code = frappe.form_dict.get("code")
+    state = frappe.form_dict.get("state")
     exchange_token_url=f"https://oauth2.googleapis.com/token"
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     data = {
@@ -167,6 +169,7 @@ def google_oauth_callback(code = None):
     }
     frappe.log_error("g data",data)
     response = requests.post(exchange_token_url, headers=headers, data=data)
+    frappe.log_error()
     if response.status_code == 200:
         if response.json().get("access_token"):
             frappe.log_error("gaccess_toke",response.json())
