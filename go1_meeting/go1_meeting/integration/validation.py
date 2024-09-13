@@ -158,12 +158,14 @@ def zoom_oauth_callback(code = None):
 def google_oauth_callback(code=None):
     code = frappe.form_dict.get("code")
     state = frappe.form_dict.get("state")
+    frappe.log_error("code",code)
+    frappe.log_error("state",state)
     exchange_token_url=f"https://oauth2.googleapis.com/token"
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     data = {
         "code" : code,
-        "client_id" : frappe.db.get_value("Meeting Integration",{'platform':"Google Meet"},['client_id']),
-        "client_secret":frappe.db.get_value("Meeting Integration",{'platform':"Google Meet"},['client_secret']),
+        "client_id" : state.get("client_id"),
+        "client_secret":state.get("client_secret"),
         "redirect_uri" : frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.google_oauth_callback'),
         "grant_type" : "authorization_code"
     }
