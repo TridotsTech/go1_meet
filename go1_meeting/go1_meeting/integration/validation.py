@@ -176,6 +176,9 @@ def google_oauth_callback(code=None):
     if response.status_code == 200:
         if response.json().get("access_token"):
             frappe.log_error("gaccess_toke",response.json())
+            frappe.local.response["type"] = "redirect"
+            frappe.local.response["location"] = f"/app/meeting-integration{state_data.get("doc")}"
+
 @frappe.whitelist()
 def authorize_user_access_token(doc):
     if type(doc) == str:
