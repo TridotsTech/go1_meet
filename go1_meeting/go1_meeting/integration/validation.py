@@ -1,4 +1,5 @@
 import frappe,msal,requests,json,base64,urllib.parse
+import jwt,time
 # from go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration import create_meeting_link
 @frappe.whitelist()
 def validate_user(doc):
@@ -140,9 +141,8 @@ def zoom_oauth_callback(code = None):
         "Content-Type": "application/x-www-form-urlencoded"
     }
     data = {
-        "grant_type":"authorization_code",
-        "code":code,
-        "redirect_uri":redirect_uri
+        "grant_type":"account_credentials",
+        "account_id":11234
     }
     response = requests.post(token_url, headers=headers, json = data)
     frappe.log_error('response sts code',response.status_code)
@@ -153,18 +153,40 @@ def zoom_oauth_callback(code = None):
         refresh_token = token_data.get("refresh_token")
         frappe.local.response["type"] = "redirect"
         frappe.local.response["location"] = f"/app/app/go1-meet/{doc_name}"
+
+@frappe.whitelist(allow_guest = True)
+def google_oauth_callback(code = None):
+    exchange_token_url=f"https://oauth2.googleapis.com/token"
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    data = {
+        "code" : code,
+        "client_id" : frappe.db.get_value("Meeting Integration",{'platform':"Google Meet"},['client_id']),
+        "client_secret":frappe.db.get_value("Meeting Integration",{'platform':"Google Meet"},['client_secret']),
+        "redirect_uri" : frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.google_oauth_callback'),
+        "grant_type" : "authorization_code"
+    }
+    frappe.log_error("g data",data)
+    response = requests.post(exchange_token_url, headers=headers, data=data)
+    if response.status_code == 200:
+        if response.json().get("access_token"):
+            frappe.log_error("gaccess_toke",response.json())
 @frappe.whitelist()
 def authorize_user_access_token(doc):
-    doc = json.loads(doc)
-    #Checks for zoom
+    if type(doc) == str:
+        doc = json.loads(doc)
+    #Authorize zoom
     if doc['platform'] == "Zoom":
-        admin_auth = frappe.db.get_value("Meeting Integration",{'platform':doc['platform']},['admin_auth'])
-    user = "Administrator" if doc['platform'] == "Zoom" and admin_auth else frappe.session.user
-    if not frappe.db.exists("User Platform Credentials",{"user":user,"platform":doc['platform']}):
-        auth_url = _redirect_uri(doc)
-        return {"status":"not_authorized","message":auth_url}
-    else:
-        return {"status":"authorized"}
+        return authorize_zoom(doc)
+    #Authenticate Teams meeting
+    if doc['platform'] == "Teams":
+        user = frappe.session.user
+        if not frappe.db.exists("User Platform Credentials",{"user":user,"platform":doc['platform']}):
+            auth_url = _redirect_uri(doc)
+            return {"status":"not_authorized","message":auth_url}
+        else:
+            return {"status":"authorized"}
+    if doc['platform'] == "Google Meet":
+        return authorize_google(doc)
         
 
 def get_teams_credentials():
@@ -175,14 +197,102 @@ def get_teams_credentials():
     scopes = ['User.Read', 'OnlineMeetings.ReadWrite']
     return client_id,client_secret,tenant_id,scopes
 
-def set_token_response(token_response):
+def set_token_response(token_response,platform,user=None):
+    user = frappe.session.user if not user else user
     frappe.log_error("token_response set tokens",token_response)
-    cred = frappe.get_doc({
-            "doctype": "User Platform Credentials",
-            "user":frappe.session.user,
-            "platform":"Teams",
-            "access_token":token_response['access_token'],
-            "refresh_token":token_response['refresh_token']
-        })
-    cred.insert()
-    frappe.db.commit()
+    if not frappe.db.exists("User Platform Credentials",{"user":user,"platform":platform}):
+        cred = frappe.get_doc({
+                "doctype": "User Platform Credentials",
+                "user":frappe.session.user if not user else user,
+                "platform":platform,
+                "access_token":token_response['access_token'],
+                "refresh_token":token_response['refresh_token'] if "refresh_token" in token_response else None
+            })
+        cred.insert()
+        frappe.db.commit()
+    else:
+        cred = frappe.get_doc("User Platform Credentials",{"user":user,"platform":platform})
+        cred.access_token = token_response['access_token']
+        cred.refresh_token = token_response['refresh_token'] if "refresh_token" in token_response else None
+        cred.save()
+
+def generate_zoom_token(doc):
+    zoom_doc = frappe.get_doc("Meeting Integration",{"platform":doc['platform']})
+    client_id = zoom_doc.client_id
+    client_secret = zoom_doc.get_password("client_secret")
+    account_id = zoom_doc.account_id
+    token_url = "https://zoom.us/oauth/token"
+    headers = {
+        "Authorization": "Basic " + base64.b64encode(f"{client_id}:{client_secret}".encode()).decode(),
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    data = {
+        "grant_type":"account_credentials",
+        "account_id":account_id
+    }
+    frappe.log_error("cred",[client_id,client_secret,account_id])
+    frappe.log_error("headers",headers)
+    frappe.log_error("data",data)
+    access_response = requests.post(token_url, headers=headers, data = data)
+    frappe.log_error("access token",access_response.json())
+    if access_response.status_code == 200:
+        set_token_response(access_response.json(),doc['platform'],user="Administrator")
+        return authorize_zoom(doc)
+
+@frappe.whitelist()
+def authorize_zoom(doc):
+    if type(doc) ==  str:
+        doc = json.loads(doc)
+    if not frappe.db.exists("User Platform Credentials",
+                            {"user":"Administrator",
+                             "platform":doc['platform']}):
+        #Generate access token
+        return generate_zoom_token(doc)
+    else:
+        credentials = frappe.get_doc("User Platform Credentials",
+                                     {"user":"Administrator",
+                                      "platform":doc['platform']
+                                      })
+        if credentials.get('access_token'):
+            validate_url = "https://api.zoom.us/v2/users/me"
+            headers={
+                "Authorization": "Bearer " + credentials.get('access_token'),
+                "Content-Type": "application/json"
+            }
+            response = requests.get(url=validate_url,headers=headers)
+            frappe.log_error("autorize zoom",response.status_code)
+            if response.status_code != 200:
+                frappe.log_error("returning staus !200",generate_zoom_token(doc))
+                return generate_zoom_token(doc)
+            frappe.log_error("returning",credentials.get('access_token'))
+            return {
+                "status":"success",
+                "message":"authorized",
+                "access_token":credentials.get('access_token'),
+                "auth_response":response.json()
+            }
+
+def authorize_google(doc):
+    google_meet = frappe.get_doc("Meeting Integration",{"platform":doc['platform']})
+    client_id = google_meet.client_id
+    client_secret = google_meet.get_password("client_secret")
+    oauth_url = f"https://accounts.google.com/o/oauth2/v2/auth"
+    state_data = {
+        "client_id":client_id,
+        "client_secret":client_secret,
+        "doc":doc['name']
+    }
+    encode_state = urllib.parse.urlencode(state_data)
+    frappe.log_error("endoded state",encode_state)
+    data = {
+        "client_id":client_id,
+        "client_secret":client_secret,
+        "response_type":"code",
+        "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.google_oauth_callback"),
+        "scope":"https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
+        "access_type":"offline",
+        "state":encode_state
+    }
+    # auth = requests.post(url = oauth_url,data = data)
+    # frappe.log_error("auth",auth.json())
+    return {"status":"success","url":f"{oauth_url}?{urllib.parse.urlencode(data)}"}

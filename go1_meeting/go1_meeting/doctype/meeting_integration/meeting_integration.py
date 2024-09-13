@@ -4,13 +4,13 @@
 import frappe,requests,msal,json,pytz
 from datetime import datetime,timedelta
 from frappe.model.document import Document
-from go1_meeting.go1_meeting.integration.validation import create_access_token_from_refresh_token
+from go1_meeting.go1_meeting.integration.validation import create_access_token_from_refresh_token,authorize_zoom
 
 class MeetingIntegration(Document):
 	pass
 
 @frappe.whitelist()
-def create_meeting(internal_attendees,external_attendees,from_time,to_time,subject,record,online):
+def create_teams_meeting(internal_attendees,external_attendees,from_time,to_time,subject,record,online):
 	headers = get_headers()
 	validate = validate_user_credentials(headers = headers)
 	if validate.get("directory"):
@@ -109,15 +109,15 @@ def create_calender_event(data,headers,internal_attendees,external_attendees,use
 	# frappe.log_error("cal_response",cal_response.status_code)
 
 
-def convert_local_to_utc(from_time_str,to_time_str):
+def convert_local_to_utc(from_time_str,to_time_str=None):
 	datetime_format = "%Y-%m-%d %H:%M:%S"
 	from_time_obj = datetime.strptime(from_time_str,datetime_format)
-	to_time_obj = datetime.strptime(to_time_str,datetime_format)
+	to_time_obj = datetime.strptime(to_time_str,datetime_format) if to_time_str else None
 	user_time_zone = frappe.db.get_value("User",frappe.session.user,"time_zone")
 	local_from_time = pytz.timezone(user_time_zone).localize(from_time_obj)
-	local_to_time = pytz.timezone(user_time_zone).localize(to_time_obj)
+	local_to_time = pytz.timezone(user_time_zone).localize(to_time_obj) if to_time_obj else None
 	utc_from_time = local_from_time.astimezone(pytz.timezone("UTC"))
-	utc_to_time = local_to_time.astimezone(pytz.timezone("UTC"))
+	utc_to_time = local_to_time.astimezone(pytz.timezone("UTC")) if local_to_time else None
 	frappe.log_error("utc_from_time",utc_from_time)
 	frappe.log_error("utc_to_time",utc_to_time)
 	return utc_from_time, utc_to_time
@@ -140,17 +140,29 @@ def convert_utc_to_local(from_time_str):
 	return local_from_time.strftime("%Y-%m-%d %H:%M:%S")
 
 @frappe.whitelist()
-def cancel_event(event_id):
-	headers = get_headers()
-	validate = validate_user_credentials(headers = headers)
-	if validate.get("directory"):
-		if validate.get("is_updated"):
-			headers = get_headers()
-	# event_id = 'AAMkAGMwZmM1ZTNkLTI2ZDUtNGM0My1hN2E3LWVhZjM5NzM2MDllNQBGAAAAAAD6y3yaxeGnR5BGS2eepRmWBwDML2N9N9lsRYVSK4VuVul-AAAAAAENAADML2N9N9lsRYVSK4VuVul-AAB9WYeeAAA='
-	url = f"https://graph.microsoft.com/v1.0/me/events/{event_id}"
-	headers = headers
-	response = requests.delete(url, headers=headers)
-	frappe.log_error("response",response.status_code)
+def cancel_event(event_id,platform,doc = None):
+	if(platform == "Teams"):
+		headers = get_headers()
+		validate = validate_user_credentials(headers = headers)
+		if validate.get("directory"):
+			if validate.get("is_updated"):
+				headers = get_headers()
+		# event_id = 'AAMkAGMwZmM1ZTNkLTI2ZDUtNGM0My1hN2E3LWVhZjM5NzM2MDllNQBGAAAAAAD6y3yaxeGnR5BGS2eepRmWBwDML2N9N9lsRYVSK4VuVul-AAAAAAENAADML2N9N9lsRYVSK4VuVul-AAB9WYeeAAA='
+		url = f"https://graph.microsoft.com/v1.0/me/events/{event_id}"
+		headers = headers
+	elif platform == "Zoom":
+		frappe.log_error("working","working....")
+		if type(doc) == str:
+			doc = json.loads(doc)
+		auth_response = authorize_zoom(doc)
+		frappe.log_error("zoom auth",auth_response.get("access_token"))
+		if auth_response.get("status") == "success" and auth_response.get("access_token"):
+			headers = {"Authorization":f"Bearer {auth_response.get('access_token')}"}
+			url = f"https://api.zoom.us/v2/meetings/{event_id}"
+			frappe.log_error("dev",[url,headers])
+	frappe.log_error("Zoom",headers)
+	response = requests.delete(url = url, headers=headers)
+	frappe.log_error("cancel response",response.status_code)
 	if response.status_code == 204:
 		return {"status":"success"}
 
@@ -193,15 +205,23 @@ def get_users(headers):
 	return user_directory
 
 @frappe.whitelist()
-def edit_meeting(from_time,to_time,subject,event_id,meeting_id):
-	headers = get_headers()
-	validate = validate_user_credentials(headers = get_headers())
-	if validate.get("directory"):
-		if validate.get("is_updated"):
-			headers = get_headers()
+def edit_meeting(from_time,subject,meeting_id,event_id=None,doc=None,to_time = None,duration=None):
+	if type(doc) == str:
+		doc = json.loads(doc)
+	if doc['platform'] == "Teams":
+		headers = get_headers()
+		validate = validate_user_credentials(headers = get_headers())
+		if validate.get("directory"):
+			if validate.get("is_updated"):
+				headers = get_headers()
+		return edit_teams_meeting(subject,headers,from_time,event_id,meeting_id,to_time)
+	elif doc['platform'] == "Zoom":
+		return edit_zoom_meeting(from_time,subject,meeting_id,duration = duration,doc = doc)
 	# from_time = datetime.strftime(from_time,"%Y-%m-%d %H:%M:%S")
 	# to_time = datetime.strftime(to_time,"%Y-%m-%d %H:%M:%S")
 	frappe.log_error("from time type",type(from_time))
+	
+def edit_teams_meeting(subject,headers,from_time,event_id,meeting_id,to_time=None):
 	from_time , to_time = from_time.replace(" ","T"),to_time.replace(" ","T")
 	frappe.log_error("time format",[from_time,to_time])
 	event_payload = {
@@ -240,22 +260,50 @@ def edit_meeting(from_time,to_time,subject,event_id,meeting_id):
 			return {"status":"success"}
 	return {"status":"failed"}	
 
+def edit_zoom_meeting(from_time,subject,meeting_id,duration,doc):
+	frappe.log_error("from time",from_time)
+	from_time ,to_time = convert_local_to_utc(from_time)
+	utc_start_time = datetime.strftime(from_time,"%Y-%m-%dT%H:%M:%SZ")
+	frappe.log_error('utc time',utc_start_time)
+	authorize = authorize_zoom(doc)
+	frappe.log_error("edit rsp",authorize)
+	headers = {"Authorization":f"Bearer {authorize.get('access_token')}"}
+	url = f"https://api.zoom.us/v2/meetings/{meeting_id}"
+	frappe.log_error("type dur",type(duration))
+	payload={
+		"topic":subject,
+		"start_time":utc_start_time,	
+		"duration":int(duration) // 60,
+	}
+	frappe.log_error("payload",[payload,url])
+	edit_response = requests.patch(url = url , headers=headers,json=payload)
+	frappe.log_error("edit zoom response",edit_response.status_code)
+	if edit_response.status_code == 204:
+		return {
+			"status":"success",
+			"message":"zoom meeting edited successfully"
+		}
 @frappe.whitelist()
-def get_attendance(meeting_id):
-	headers = get_headers()
-	validate = validate_user_credentials(headers = get_headers())
-	if validate.get("directory"):
-		if validate.get("is_updated"):
-			headers = get_headers()
-	attendance = requests.get(
-		url = f"https://graph.microsoft.com/v1.0/me/onlineMeetings/{meeting_id}/attendanceReports",
-		headers = headers
-	)
-	attendance_data = attendance.json()
-	frappe.log_error("attendance data",[meeting_id,attendance_data])
-	return fetch_attendance_reports(meeting_id,attendance_data['value'][0]['id'])
+def get_attendance(doc):
+	if type(doc) == str:
+		doc = json.loads(doc)
+	if doc['platform'] == "Teams":
+		headers = get_headers()
+		validate = validate_user_credentials(headers = get_headers())
+		if validate.get("directory"):
+			if validate.get("is_updated"):
+				headers = get_headers()
+		attendance = requests.get(
+			url = f"https://graph.microsoft.com/v1.0/me/onlineMeetings/{doc['meeting_id']}/attendanceReports",
+			headers = headers
+		)
+		attendance_data = attendance.json()
+		# frappe.log_error("attendance data",[meeting_id,attendance_data])
+		return fetch_teams_attendance_reports(doc['meeting_id'],attendance_data['value'][0]['id'])
+	elif doc['platform'] == "Zoom":
+		fetch_zoom_attendance_report(doc)
 
-def fetch_attendance_reports(meeting_id,attendance_report_id):
+def fetch_teams_attendance_reports(meeting_id,attendance_report_id):
 	headers = get_headers()
 	frappe.log_error("attendance report id",attendance_report_id)
 	validate = validate_user_credentials(headers = get_headers())
@@ -279,3 +327,62 @@ def fetch_attendance_reports(meeting_id,attendance_report_id):
 			'role': i['role']
 		})
 	return {"status":"success","data":data}
+
+def fetch_zoom_attendance_report(doc,page_size = 300):
+	auth_response = authorize_zoom(doc)
+	if auth_response.get("access_token"):
+		url = f"https://api.zoom.us/v2/report/meetings/{doc['zoom_meeting_id']}/participants"
+		frappe.log_error("att url",url)
+		headers = {"Authorization":f"Bearer {auth_response['access_token']}"}
+		payload = {"page_size":300}
+		attendance = requests.get(url = url , headers = headers , params = payload)
+		frappe.log_error("att sts code",attendance.status_code)
+		if attendance.status_code == 200:
+			frappe.log_error("att rec",attendance.text)
+			return {"status":"success","data":attendance.json()}
+		elif attendance.status_code == 400:
+			return{
+				"status":"success",
+				"message":"Only available for Paid or ZMP account"
+			}
+
+@frappe.whitelist()
+def create_zoom_meeting(token , doc):
+	doc = json.loads(doc)
+	from_time , to_time = convert_local_to_utc(doc['from'])
+	utc_start_time = datetime.strftime(from_time,"%Y-%m-%dT%H:%M:%SZ")
+	frappe.log_error("times",[from_time,to_time])
+	headers = {
+		"Authorization":f"Bearer {token}"
+	}
+	frappe.log_error("duration",doc['duration'])
+	data = {
+		"topic":doc['subject'],
+		"agenda":doc['description'] if doc.get("description") else "",
+		"start_time":utc_start_time,
+		"password":doc['passcode'],
+		"type":2,
+		"timezone": frappe.db.get_value("User",frappe.session.user,"time_zone"),
+		"duration" : doc['duration'] // 60,
+		"settings":{
+			"host_video": True if doc['enable_video_for_host'] else False,
+			"participant_video": True if doc['enable_video_for_participant'] else False,
+			"join_before_host": False if doc['waiting_room'] else True,
+			"mute_upon_entry": True if doc['mute_participants_upon_entry'] else False,
+			"waiting_room": True if doc['waiting_room'] else False,
+			"approval_type": 1 if doc['registered_meeting'] and doc['approval_for_registration'] == "Manual"\
+				  else 0,
+			"audio": "voip",
+			"auto_recording": "local" if doc['is_record_automatically'] else None,
+			"use_pmi": False if doc['generate_meeting_id'] else True
+		}
+	}
+	if doc['registered_meeting']:
+		data['settings']['registration_type'] = 1
+	frappe.log_error("Meeting payload",data)
+	url = "https://api.zoom.us/v2/users/me/meetings"
+	meeting_response = requests.post(url = url,headers = headers , json= data)
+	frappe.log_error("meeting response code",meeting_response.status_code)
+	if meeting_response.status_code == 201:
+		frappe.log_error("meeting_response",meeting_response.json())
+		return meeting_response.json()

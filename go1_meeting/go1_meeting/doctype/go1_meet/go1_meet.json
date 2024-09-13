@@ -9,14 +9,26 @@
   "platform",
   "subject",
   "status",
+  "description",
+  "enable_video_for_host",
+  "enable_video_for_participant",
+  "mute_participants_upon_entry",
   "column_break_nypf",
   "is_record_automatically",
   "is_online_meeting",
+  "is_secured",
+  "passcode",
+  "generate_meeting_id",
+  "zoom_meeting_id",
+  "waiting_room",
+  "registered_meeting",
+  "approval_for_registration",
   "url",
   "section_break_yxkw",
   "from",
   "column_break_ibhx",
   "to",
+  "duration",
   "section_break_vbrt",
   "participants",
   "external_participants",
@@ -53,11 +65,12 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:doc.platform==\"Teams\"",
    "fieldname": "to",
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "To",
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.platform==\"Teams\""
   },
   {
    "fieldname": "section_break_vbrt",
@@ -90,6 +103,7 @@
   {
    "fieldname": "meeting_id",
    "fieldtype": "Small Text",
+   "hidden": 1,
    "label": "Meeting Id"
   },
   {
@@ -101,6 +115,7 @@
   },
   {
    "default": "1",
+   "depends_on": "eval:doc.platform == \"Teams\"",
    "fieldname": "is_online_meeting",
    "fieldtype": "Check",
    "label": "Is Online Meeting",
@@ -115,6 +130,7 @@
   {
    "fieldname": "event_id",
    "fieldtype": "Small Text",
+   "hidden": 1,
    "label": "Event Id"
   },
   {
@@ -126,11 +142,93 @@
    "fieldname": "attendance",
    "fieldtype": "HTML",
    "label": "attendance"
+  },
+  {
+   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "fieldname": "duration",
+   "fieldtype": "Duration",
+   "label": "Duration",
+   "mandatory_depends_on": "eval:doc.platform==\"Zoom\""
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "fieldname": "is_secured",
+   "fieldtype": "Check",
+   "label": "is Secured"
+  },
+  {
+   "depends_on": "eval:doc.platform == \"Zoom\"",
+   "fieldname": "passcode",
+   "fieldtype": "Data",
+   "label": "Passcode"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "fieldname": "generate_meeting_id",
+   "fieldtype": "Check",
+   "label": "Generate meeting Id"
+  },
+  {
+   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "fieldname": "zoom_meeting_id",
+   "fieldtype": "Data",
+   "label": "Meeting Id"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "fieldname": "enable_video_for_host",
+   "fieldtype": "Check",
+   "label": "Enable video for host"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "fieldname": "enable_video_for_participant",
+   "fieldtype": "Check",
+   "label": "Enable Video For Participant"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "fieldname": "mute_participants_upon_entry",
+   "fieldtype": "Check",
+   "label": "Mute Participants Upon Entry"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "description": "Only users admitted by the host can join the meeting",
+   "fieldname": "waiting_room",
+   "fieldtype": "Check",
+   "label": "Waiting Room"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.platform==\"Zoom\"",
+   "fieldname": "registered_meeting",
+   "fieldtype": "Check",
+   "label": "Registered Meeting"
+  },
+  {
+   "depends_on": "eval:doc.registered_meeting==1",
+   "fieldname": "approval_for_registration",
+   "fieldtype": "Select",
+   "label": "Approval For Registration",
+   "options": "Auto\nManual"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-07 20:00:58.367999",
+ "modified": "2024-09-12 11:11:38.848304",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Go1 Meet",

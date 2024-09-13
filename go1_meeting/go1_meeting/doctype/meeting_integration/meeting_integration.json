@@ -9,6 +9,7 @@
   "client_id",
   "client_secret",
   "tenant_id",
+  "account_id",
   "column_break_uewp",
   "user_auth",
   "admin_auth"
@@ -53,11 +54,18 @@
    "fieldname": "admin_auth",
    "fieldtype": "Check",
    "label": "Admin based authentication"
+  },
+  {
+   "depends_on": "eval:doc.platform == \"Zoom\"",
+   "fieldname": "account_id",
+   "fieldtype": "Data",
+   "label": "Account Id",
+   "mandatory_depends_on": "eval:doc.platform == \"Zoom\""
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-10 15:56:16.437288",
+ "modified": "2024-09-11 11:48:50.066501",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Meeting Integration",
