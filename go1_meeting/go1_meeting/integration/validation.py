@@ -286,13 +286,13 @@ def authorize_google(doc):
     frappe.log_error("endoded state",encode_state)
     data = {
         "client_id":client_id,
-        "client_secret":client_secret,
         "response_type":"code",
         "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.google_oauth_callback"),
         "scope":"https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
         "access_type":"offline",
         "state":encode_state
     }
+    frappe.log_error("auth url auth google",f"{oauth_url}?{urllib.parse.urlencode(data)}")
     # auth = requests.post(url = oauth_url,data = data)
     # frappe.log_error("auth",auth.json())
     return {"status":"success","url":f"{oauth_url}?{urllib.parse.urlencode(data)}"}
