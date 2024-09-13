@@ -152,7 +152,7 @@ def zoom_oauth_callback(code = None):
         access_token = token_data.get("access_token")
         refresh_token = token_data.get("refresh_token")
         frappe.local.response["type"] = "redirect"
-        frappe.local.response["location"] = f"/app/app/go1-meet/{doc_name}"
+        frappe.local.response["location"] = f"/app/app/go1-meet/{doc_name}?state=authorized"
 
 @frappe.whitelist(allow_guest = True)
 def google_oauth_callback(code=None):
