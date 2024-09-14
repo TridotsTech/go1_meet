@@ -176,6 +176,7 @@ def google_oauth_callback(code=None):
     if response.status_code == 200:
         if response.json().get("access_token"):
             frappe.log_error("gaccess_toke",response.json())
+            set_token_response(response.json(),"Google Meet")
             frappe.local.response["type"] = "redirect"
             frappe.local.response["location"] = f"/app/go1-meet/{state_data.get('doc')}?state=authorized"
 
@@ -298,10 +299,38 @@ def authorize_google(doc):
         "response_type":"code",
         "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.google_oauth_callback"),
         "scope":"https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
-        "access_type":"offline",
+        "access_type": "offline",
         "state":encode_state
     }
     frappe.log_error("auth url auth google",f"{oauth_url}?{urllib.parse.urlencode(data)}")
     # auth = requests.post(url = oauth_url,data = data)
     # frappe.log_error("auth",auth.json())
     return {"status":"success","url":f"{oauth_url}?{urllib.parse.urlencode(data)}"}
+
+
+@frappe.whitelist(allow_guest = True)
+def facebook_oauth_callback(code = None):
+    code = frappe.form_dict.get("code")
+    params = {
+        "client_id" : '8216697681748093',
+        "client_secret" : '73d7138847e324b21ffc251f8a3d29ae',
+        "redirect_uri" : frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.facebook_oauth_callback'),
+        "code" : code
+    }
+    token_url = 'https://graph.facebook.com/v14.0/oauth/access_token'
+    response = requests.post(token_url, data = params)
+    frappe.log_error("facebook res sts",response.status_code)
+    frappe.log_error("facebook access token",response.json())
+
+@frappe.whitelist()
+def authorize_facebook():
+    oauth_url = "https://www.facebook.com/v14.0/dialog/oauth"
+    params = {
+        "scope" : "public_profile,email,pages_show_list,pages_manage_posts,pages_read_engagement,pages_manage_metadata",
+        "redirect_uri" : frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.facebook_oauth_callback"),
+        'client_id': "8216697681748093",
+        "client_secret":"73d7138847e324b21ffc251f8a3d29ae"
+    }
+
+    auth_url = f"{oauth_url}?{urllib.parse.urlencode(params)}"
+    return auth_url

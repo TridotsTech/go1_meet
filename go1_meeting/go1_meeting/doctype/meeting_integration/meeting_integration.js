@@ -74,6 +74,17 @@ frappe.ui.form.on("Meeting Integration", {
             })
             
         })
+
+        frm.add_custom_button("Test Facebook",function(){
+            frappe.call({
+                method:"go1_meeting.go1_meeting.integration.validation.authorize_facebook",
+                callback(r){
+                    if(r.message){
+                        window.location.href = r.message
+                    }
+                }
+            })
+        })
        
     },
 });
