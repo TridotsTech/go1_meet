@@ -342,21 +342,21 @@ def oauth_linkedin(code = None):
     # state = urllib.parse.parse_qs(encoded_state)
     frappe.log_error("linkedin code",code)
     # frappe.log_error("linkedin state",state)
-    if code:
-        frappe.log_error("code",code)
-        exchange_url = "https://www.linkedin.com/oauth/v2/accessToken"
-        headers = {"Content-Type":"application/x-www-form-urlencoded"}
-        data={
-            "grant_type":"authorization_code",
-            "code":code,
-            "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.oauth_linkedin"),
-            "client_id":"77wij4ejnipg99",
-            "client_secret":"MjNQLAWu2fAOmqsI"
-        }
-        response = requests.post(url = exchange_url,headers = headers,data = data)
-        frappe.log_error("linkedin redirect response",response.json())
-        if response.status_code == 200:
-            return {"status":"success","message":"Authorized"}
+    # if code:
+    frappe.log_error("code",code)
+    exchange_url = "https://www.linkedin.com/oauth/v2/accessToken"
+    headers = {"Content-Type":"application/x-www-form-urlencoded"}
+    data={
+        "grant_type":"authorization_code",
+        "code":code,
+        "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.oauth_linkedin"),
+        "client_id":"77wij4ejnipg99",
+        "client_secret":"MjNQLAWu2fAOmqsI"
+    }
+    response = requests.post(url = exchange_url,headers = headers,data = data)
+    frappe.log_error("linkedin redirect response",response.json())
+    if response.status_code == 200:
+        return {"status":"success","message":"Authorized"}
         
 @frappe.whitelist()
 def authorize_linkedin():
@@ -364,7 +364,7 @@ def authorize_linkedin():
     params = {
         "response_type":'code',
         "client_id":"77wij4ejnipg99",
-        "scope": "r_liteprofile,r_emailaddress,w_member_social",
+        "scope": "r_liteprofile r_emailaddress openid",
         "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.oauth_linkedin"),
     }
     frappe.log_error("link auth url",f"{oauth_url}?{urllib.parse.urlencode(params)}")
