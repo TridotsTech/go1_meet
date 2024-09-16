@@ -358,6 +358,7 @@ def oauth_linkedin(code = None):
         if response.status_code == 200:
             return {"status":"success","message":"Authorized"}
         
+@frappe.whitelist()
 def authorize_linkedin():
     oauth_url = "https://www.linkedin.com/oauth/v2/authorization"
     params = {
