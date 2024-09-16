@@ -338,10 +338,10 @@ def authorize_facebook():
 @frappe.whitelist(allow_guest = True)
 def oauth_linkedin(code = None):
     code = frappe.form_dict.get("code")
-    encoded_state = frappe.form_dict("state")
-    state = urllib.parse.parse_qs(encoded_state)
+    # encoded_state = frappe.form_dict("state")
+    # state = urllib.parse.parse_qs(encoded_state)
     frappe.log_error("linkedin code",code)
-    frappe.log_error("linkedin state",state)
+    # frappe.log_error("linkedin state",state)
     if code:
         frappe.log_error("code",code)
         exchange_url = "https://www.linkedin.com/oauth/v2/accessToken"
@@ -350,8 +350,8 @@ def oauth_linkedin(code = None):
             "grant_type":"authorization_code",
             "code":code,
             "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.oauth_linkedin"),
-            "client_id":state.get("client_id"),
-            "client_secret":state.get("client_secret")
+            "client_id":"77wij4ejnipg99",
+            "client_secret":"MjNQLAWu2fAOmqsI"
         }
         response = requests.post(url = exchange_url,headers = headers,data = data)
         frappe.log_error("linkedin redirect response",response.json())
@@ -365,6 +365,7 @@ def authorize_linkedin():
         "response_type":'code',
         "client_id":"77wij4ejnipg99",
         "client_secret":"MjNQLAWu2fAOmqsI",
+        "scope": "r_liteprofile r_emailaddress w_member_social",
         "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.oauth_linkedin"),
     }
     return f"{oauth_url}?{urllib.parse.urlencode(params)}"
