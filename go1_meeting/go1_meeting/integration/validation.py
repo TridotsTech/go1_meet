@@ -364,7 +364,8 @@ def authorize_linkedin():
     params = {
         "response_type":'code',
         "client_id":"77wij4ejnipg99",
-        "scope": "openid profile w_member_social email r_liteprofile r_emailaddress",
+        "scope":"r_liteprofile r_emailaddress w_member_social",
+        # "scope": "openid profile w_member_social email liteprofile ",
         "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.oauth_linkedin"),
     }
     frappe.log_error("link auth url",f"{oauth_url}?{urllib.parse.urlencode(params)}")
