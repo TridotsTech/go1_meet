@@ -334,3 +334,36 @@ def authorize_facebook():
 
     auth_url = f"{oauth_url}?{urllib.parse.urlencode(params)}"
     return auth_url
+
+@frappe.whitelist(allow_guest = True)
+def oauth_linkedin(code = None):
+    code = frappe.form_dict.get("code")
+    encoded_state = frappe.form_dict("state")
+    state = urllib.parse.parse_qs(encoded_state)
+    frappe.log_error("linkedin code",code)
+    frappe.log_error("linkedin state",state)
+    if code:
+        frappe.log_error("code",code)
+        exchange_url = "https://www.linkedin.com/oauth/v2/accessToken"
+        headers = {"Content-Type":"application/x-www-form-urlencoded"}
+        data={
+            "grant_type":"authorization_code",
+            "code":code,
+            "redirect_uri":frappe.utils.get_url("/api/method/go1_social.go1_social.integration.validation.oauth_linkedin"),
+            "client_id":state.get("client_id"),
+            "client_secret":state.get("client_secret")
+        }
+        response = requests.post(url = exchange_url,headers = headers,data = data)
+        frappe.log_error("linkedin redirect response",response.json())
+        if response.status_code == 200:
+            return {"status":"success","message":"Authorized"}
+        
+def authorize_linkedin():
+    oauth_url = "https://www.linkedin.com/oauth/v2/authorization"
+    params = {
+        "response_type":'code',
+        "client_id":"77wij4ejnipg99",
+        "client_secret":"MjNQLAWu2fAOmqsI",
+        "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.oauth_linkedin"),
+    }
+    return f"{oauth_url}?{urllib.parse.urlencode(params)}"
