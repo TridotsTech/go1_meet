@@ -349,7 +349,7 @@ def oauth_linkedin(code = None):
         data={
             "grant_type":"authorization_code",
             "code":code,
-            "redirect_uri":frappe.utils.get_url("/api/method/go1_social.go1_social.integration.validation.oauth_linkedin"),
+            "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.oauth_linkedin"),
             "client_id":state.get("client_id"),
             "client_secret":state.get("client_secret")
         }
