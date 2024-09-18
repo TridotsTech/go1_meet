@@ -1,6 +1,6 @@
 import frappe,msal,requests,json,base64,urllib.parse
 import jwt,time
-from go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration import create_room
+# from go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration import create_room
 # from go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration import create_meeting_link
 @frappe.whitelist()
 def validate_user(doc):
@@ -198,8 +198,8 @@ def authorize_user_access_token(doc):
             return {"status":"authorized"}
     if doc['platform'] == "Google Meet":
         return authorize_google(doc)
-    if doc['platform'] == "WhereBy":
-        return create_room(doc)
+    # if doc['platform'] == "WhereBy":
+    #     return create_room(doc)
 
 def get_teams_credentials():
     cred_doc = frappe.get_doc("Meeting Integration",{"platform":"Teams"})
