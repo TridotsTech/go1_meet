@@ -1,5 +1,6 @@
 import frappe,msal,requests,json,base64,urllib.parse
 import jwt,time
+from go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration import create_room
 # from go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration import create_meeting_link
 @frappe.whitelist()
 def validate_user(doc):
@@ -81,7 +82,7 @@ def _redirect_uri(doc):
         client_id , client_secret , tenant_id , scopes = get_teams_credentials()
         authority = f"https://login.microsoftonline.com/{tenant_id}"
         msal_app = msal.ClientApplication(client_id, authority=authority, client_credential=client_secret)
-        redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_callback')
+        redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
         frappe.log_error("redirect_uri",redirect_uri)
         # Generate authorization URL
         auth_url = msal_app.get_authorization_request_url(scopes, redirect_uri=redirect_uri)
@@ -176,7 +177,7 @@ def google_oauth_callback(code=None):
     if response.status_code == 200:
         if response.json().get("access_token"):
             frappe.log_error("gaccess_toke",response.json())
-            set_token_response(response.json(),"Google Meet")
+            set_token_response(response.json(),"Google Meet",user="Administrator")
             frappe.local.response["type"] = "redirect"
             frappe.local.response["location"] = f"/app/go1-meet/{state_data.get('doc')}?state=authorized"
 
@@ -197,7 +198,8 @@ def authorize_user_access_token(doc):
             return {"status":"authorized"}
     if doc['platform'] == "Google Meet":
         return authorize_google(doc)
-        
+    if doc['platform'] == "WhereBy":
+        return create_room(doc)
 
 def get_teams_credentials():
     cred_doc = frappe.get_doc("Meeting Integration",{"platform":"Teams"})
@@ -295,12 +297,14 @@ def authorize_google(doc):
     encode_state = urllib.parse.urlencode(state_data)
     frappe.log_error("endoded state",encode_state)
     data = {
+        "access_type" : "offline",
         "client_id":client_id,
         "response_type":"code",
         "redirect_uri":frappe.utils.get_url("/api/method/go1_meeting.go1_meeting.integration.validation.google_oauth_callback"),
         "scope":"https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
         "access_type": "offline",
-        "state":encode_state
+        "state":encode_state,
+        "prompt" : "consent"
     }
     frappe.log_error("auth url auth google",f"{oauth_url}?{urllib.parse.urlencode(data)}")
     # auth = requests.post(url = oauth_url,data = data)
