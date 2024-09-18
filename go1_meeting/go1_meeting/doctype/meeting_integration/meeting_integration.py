@@ -176,7 +176,9 @@ def validate_user_credentials(headers, is_updated = None):
 	user_directory = get_users(headers)
 	# frappe.log_error("user_directory_if",user_directory.status_code)
 
-	if user_directory.status_code != 200:
+	if user_directory.status_code == 200:
+		return {'directory':user_directory.json()['value']}
+	else:
 		# frappe.log_error("user_directory if js",user_directory.json())
 		refresh_token = frappe.db.get_value("User Platform Credentials",
 				{"user":frappe.session.user,"platform":"Teams"},['refresh_token'])
@@ -195,7 +197,6 @@ def validate_user_credentials(headers, is_updated = None):
 			updated_directory = get_users(headers)
 		if is_updated:
 			return {'directory':updated_directory.json()['value'],"is_updated":1}
-	return {'directory':user_directory.json()['value']}
 
 def get_users(headers):
 	user_directory = requests.get(
@@ -386,3 +387,25 @@ def create_zoom_meeting(token , doc):
 	if meeting_response.status_code == 201:
 		frappe.log_error("meeting_response",meeting_response.json())
 		return meeting_response.json()
+
+@frappe.whitelist()
+def create_room(doc):
+	if type(doc) == str:
+		doc = json.loads(doc)
+	where_doc = frappe.get_doc("Meeting Integration",{"platform":doc['platform']})
+	headers = {"Authorization: Bearer "+where_doc.get("api_key")}
+	payload = {
+		"endDate":convert_local_to_utc(doc['to']),
+		"isLocked":False if not doc['secured_room'] else True,
+		"roomMode":"group" if doc['is_group'] else "normal",
+		"roomNamePrefix":doc['room_name_prefix'] if doc.get("room_name_prefix") else "",
+		"fields": ["hostRoomUrl", "viewerRoomUrl"],
+	}
+	if doc.get("streaming"):
+		payload['streaming'] = {"enabled":True,"rtmpUrl": "rtmp://streaming.server.url"}
+	
+	response = requests.post(url = "https://api.whereby.dev/v1/meetings",headers = headers)
+	frappe.log_error("where post",response.status_code)
+	frappe.log_error("where json",response.json())
+	# if response.status_code == 200:
+	# 	frappe.log_error
