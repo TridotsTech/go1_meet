@@ -8,25 +8,26 @@
   "platform",
   "client_id",
   "client_secret",
-  "tenant_id",
-  "account_id",
+  "api_key",
   "column_break_uewp",
-  "user_auth",
-  "admin_auth"
+  "account_id",
+  "tenant_id"
  ],
  "fields": [
   {
    "fieldname": "platform",
    "fieldtype": "Select",
    "label": "Platform",
-   "options": "Teams\nZoom\nGoogle Meet"
+   "options": "Teams\nZoom\nGoogle Meet\nWhereBy"
   },
   {
+   "depends_on": "eval:doc.platform == \"Teams\" || doc.platform==\"Zoom\"",
    "fieldname": "client_id",
    "fieldtype": "Data",
    "label": "Client Id"
   },
   {
+   "depends_on": "eval:doc.platform == \"Teams\" || doc.platform==\"Zoom\"",
    "fieldname": "client_secret",
    "fieldtype": "Password",
    "label": "Client Secret"
@@ -42,30 +43,22 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "0",
-   "depends_on": "eval:doc.platform==\"Zoom\"",
-   "fieldname": "user_auth",
-   "fieldtype": "Check",
-   "label": "User based authentication"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval:doc.platform==\"Zoom\"",
-   "fieldname": "admin_auth",
-   "fieldtype": "Check",
-   "label": "Admin based authentication"
-  },
-  {
    "depends_on": "eval:doc.platform == \"Zoom\"",
    "fieldname": "account_id",
    "fieldtype": "Data",
    "label": "Account Id",
    "mandatory_depends_on": "eval:doc.platform == \"Zoom\""
+  },
+  {
+   "depends_on": "eval:doc.platform == \"WhereBy\"",
+   "fieldname": "api_key",
+   "fieldtype": "Small Text",
+   "label": "API Key"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-11 11:48:50.066501",
+ "modified": "2024-09-17 17:56:19.470511",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Meeting Integration",

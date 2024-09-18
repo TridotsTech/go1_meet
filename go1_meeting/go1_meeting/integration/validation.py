@@ -200,9 +200,14 @@ def authorize_user_access_token(doc):
             return {"status":"authorized"}
     if doc['platform'] == "Google Meet":
         return authorize_google(doc)
-    # if doc['platform'] == "WhereBy":
-    #     return create_room(doc)
-
+    if doc['platform'] == "WhereBy":
+        whereby_cred = frappe.db.exists("Meeting Integration",{'platform':doc['platform']})
+        if not whereby_cred:
+            return {
+                "status":"failed",
+                "message":"not authorized"
+            }
+        return{"status":"success","message":"authorized"}
 def get_teams_credentials():
     cred_doc = frappe.get_doc("Meeting Integration",{"platform":"Teams"})
     client_id = cred_doc.client_id

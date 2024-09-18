@@ -160,7 +160,11 @@ def cancel_event(event_id,platform,doc = None):
 			headers = {"Authorization":f"Bearer {auth_response.get('access_token')}"}
 			url = f"https://api.zoom.us/v2/meetings/{event_id}"
 			frappe.log_error("dev",[url,headers])
-	frappe.log_error("Zoom",headers)
+	elif platform == "WhereBy":
+		whereby_doc = frappe.get_doc("Meeting Integration",{"platform":platform})
+		url = f"https://api.whereby.dev/v1/meetings/{event_id}"
+		headers = {"Authorization":f"Bearer {whereby_doc.get('api_key')}"}
+	frappe.log_error("WhereBy",headers)
 	response = requests.delete(url = url, headers=headers)
 	frappe.log_error("cancel response",response.status_code)
 	if response.status_code == 204:
@@ -389,23 +393,33 @@ def create_zoom_meeting(token , doc):
 		return meeting_response.json()
 
 @frappe.whitelist()
-def create_room(doc):
+def create_whereby_room(doc):
 	if type(doc) == str:
 		doc = json.loads(doc)
 	where_doc = frappe.get_doc("Meeting Integration",{"platform":doc['platform']})
-	headers = {"Authorization: Bearer "+where_doc.get("api_key")}
+	headers = {"Authorization": f"Bearer {where_doc.get('api_key')}",
+				"Content-Type":"application/json"}	
+	cur_time = datetime.strptime(frappe.utils.nowtime().split('.')[0],"%H:%M:%S")
+	end_date = convert_local_to_utc(doc['end_date']+" "+datetime.strftime(cur_time,"%H:%M:%S"))[0]
 	payload = {
-		"endDate":convert_local_to_utc(doc['to']),
-		"isLocked":False if not doc['secured_room'] else True,
-		"roomMode":"group" if doc['is_group'] else "normal",
-		"roomNamePrefix":doc['room_name_prefix'] if doc.get("room_name_prefix") else "",
+		"endDate":datetime.strftime(end_date,"%Y-%m-%dT%H:%M:%SZ"),
+		"isLocked":False if not doc['is_secured'] else True,
+		"roomMode":"group" if doc['room_type'] == "Group" else "normal",
+		# "roomNamePrefix":,
 		"fields": ["hostRoomUrl", "viewerRoomUrl"],
 	}
 	if doc.get("streaming"):
 		payload['streaming'] = {"enabled":True,"rtmpUrl": "rtmp://streaming.server.url"}
-	
-	response = requests.post(url = "https://api.whereby.dev/v1/meetings",headers = headers)
+	frappe.log_error("whereby payload",payload)
+	frappe.log_error("headers",headers)
+	response = requests.post(url = "https://api.whereby.dev/v1/meetings",headers = headers,json=payload)
 	frappe.log_error("where post",response.status_code)
 	frappe.log_error("where json",response.json())
-	# if response.status_code == 200:
-	# 	frappe.log_error
+	if response.status_code != 201:
+		# frappe.log_error
+		frappe.throw(response.json())['error']
+	if response.status_code == 201:
+		return {
+			"status":"success",
+			"data":response.json()
+		}
