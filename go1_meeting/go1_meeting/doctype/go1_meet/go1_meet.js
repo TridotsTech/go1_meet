@@ -420,7 +420,7 @@ frappe.ui.form.on("Go1 Meet", {
                 }
             }, __("Actions"))
 
-            if(frm.doc.host_room_url && !frm.doc.status == "Cancelled"){
+            if(frm.doc.host_room_url && frm.doc.status != "Cancelled"){
                 frm.add_custom_button("Join Meeting", function () {
                     window.open(`/app/whereby-embed?meeting_id=${frm.doc.host_room_url}`,'_blank')
                 })
