@@ -174,7 +174,7 @@ def get_headers():
 	frappe.throw(f"{frappe.session.user} is not authorized to access this resource")
 def validate_user_credentials(headers, is_updated = None):
 	user_directory = get_users(headers)
-	# frappe.log_error("user_directory_if",user_directory.status_code)
+	frappe.log_error("user_directory_if",user_directory.status_code)
 
 	if user_directory.status_code == 200:
 		return {'directory':user_directory.json()['value']}
