@@ -195,7 +195,7 @@ frappe.ui.form.on("Go1 Meet", {
             })
         }
 
-        if (frm.doc.url && !frm.doc.status == "Cancelled") {
+        if (frm.doc.url && frm.doc.status != "Cancelled") {
             if (frm.doc.platform == "Zoom") {
                 var add_field = [
                     {
