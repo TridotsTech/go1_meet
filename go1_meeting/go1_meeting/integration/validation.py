@@ -115,14 +115,14 @@ def teams_oauth_calback(code = None):
         redirect_uri=redirect_uri
     )
     frappe.log_error("token response",token_response)
-    latest_doc = frappe.get_last_doc("Meeting Integration",{"platform":"Teams","owner":frappe.session.user})
-    frappe.log_error("last doc",latest_doc )
-    frappe.log_error("last d name",latest_doc.name)
+    # latest_doc = frappe.get_last_doc("Meeting Integration",{"platform":"Teams","owner":frappe.session.user})
+    # frappe.log_error("last doc",latest_doc )
+    # frappe.log_error("last d name",latest_doc.name)
     set_token_response(token_response)
     # redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
     frappe.log_error("token resp from microsoft",token_response)
     frappe.local.response["type"] = "redirect"
-    frappe.local.response["location"] = f"/app/meeting-integration"
+    frappe.local.response["location"] = f"/app/go1-meet"
 
 @frappe.whitelist(allow_guest = True) 
 def zoom_oauth_callback(code = None):
