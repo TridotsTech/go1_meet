@@ -100,6 +100,7 @@ def teams_oauth_calback(code = None):
     if not code:
         frappe.throw("Authorization code not found")
     client_id , client_secret , tenant_id , scopes = get_teams_credentials()
+    frappe.log_error("teams credentials",[client_id , client_secret , tenant_id , scopes])
     redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
     authority = f"https://login.microsoftonline.com/{tenant_id}"
     frappe.log_error("code",code)
@@ -113,6 +114,7 @@ def teams_oauth_calback(code = None):
         scopes=scopes,
         redirect_uri=redirect_uri
     )
+    frappe.log_error("token response",token_response)
     latest_doc = frappe.get_last_doc("Meeting Integration",{"platform":"Teams","owner":frappe.session.user})
     frappe.log_error("last doc",latest_doc )
     frappe.log_error("last d name",latest_doc.name)
