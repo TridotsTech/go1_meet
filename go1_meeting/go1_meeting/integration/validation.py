@@ -180,7 +180,7 @@ def google_oauth_callback(code=None):
         if response.json().get("access_token"):
             frappe.log_error("gaccess_toke",response.json())
             if not frappe.db.exists("Google Calendar",{"user":"Administrator"}):
-                create_calendar(response.json())
+                create_calendar(response.json(),state_data.get('doc'))
             set_token_response(response.json(),"Google Meet",user="Administrator")
             frappe.local.response["type"] = "redirect"
             frappe.local.response["location"] = f"/app/meeting-integration/{state_data.get('doc')}"
@@ -220,7 +220,7 @@ def get_teams_credentials():
     scopes = ['User.Read', 'OnlineMeetings.ReadWrite']
     return client_id,client_secret,tenant_id,scopes
 
-def create_calendar(token_respose):
+def create_calendar(token_respose,doc_name):
     calendar_url = 'https://www.googleapis.com/calendar/v3/calendars'
     calendar_data = {
         "summary": "Go1 Meeting",
@@ -232,11 +232,10 @@ def create_calendar(token_respose):
     cal_response = requests.post(calendar_url,headers = headers,json = calendar_data)
     frappe.log_error("cal json",cal_response.json())
     if cal_response.status_code == 200:
-        gcal = frappe.new_doc("Google Calendar")
-        gcal.calendar_name = "Go1 Meeting"
-        gcal.user = "Administrator"
-        gcal.enable = 1
-        gcal.insert()
+        gcal = frappe.get_doc("Meeting Integration",doc_name)
+        gcal.calendar_name = cal_response.json().get("summary")
+        gcal.calendar_id = cal_response.json().get("id")
+        gcal.save()
         frappe.db.commit()
 
 def validate_gmeet_user(doc):
