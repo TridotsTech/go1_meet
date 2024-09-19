@@ -219,7 +219,7 @@ def get_teams_credentials():
 def set_token_response(token_response,platform,user=None):
     cur_user = frappe.session.user if not user else user
     frappe.log_error("cur user",cur_user)
-    frappe.log_error("token_response set tokens",token_response)
+    frappe.log_error("token_response set tokens",type(token_response))
     if not frappe.db.exists("User Platform Credentials",{"user":cur_user,"platform":platform}):
         frappe.log_error("set token inside",type(token_response))
         cred = frappe.get_doc({
