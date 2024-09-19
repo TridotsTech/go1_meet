@@ -239,6 +239,7 @@ def set_token_response(token_response,platform,user=None):
         cred.access_token = token_response['access_token']
         cred.refresh_token = token_response['refresh_token'] if "refresh_token" in token_response else None
         cred.save()
+        frappe.db.commit()
 
 def generate_zoom_token(doc):
     zoom_doc = frappe.get_doc("Meeting Integration",{"platform":doc['platform']})
