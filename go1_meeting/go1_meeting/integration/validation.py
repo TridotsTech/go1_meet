@@ -220,6 +220,7 @@ def set_token_response(token_response,platform,user=None):
     user = frappe.session.user if not user else user
     frappe.log_error("token_response set tokens",token_response)
     if not frappe.db.exists("User Platform Credentials",{"user":user,"platform":platform}):
+        frappe.log_error("set token inside",type(token_response))
         cred = frappe.get_doc({
                 "doctype": "User Platform Credentials",
                 "user":frappe.session.user if not user else user,
