@@ -220,7 +220,9 @@ def set_token_response(token_response,platform,user=None):
     cur_user = frappe.session.user if not user else user
     frappe.log_error("cur user",cur_user)
     frappe.log_error("token_response set tokens",type(token_response))
-    if not frappe.db.exists("User Platform Credentials",{"user":cur_user,"platform":platform}):
+    token_doc = frappe.db.exists("User Platform Credentials",{"user":cur_user,"platform":platform})
+    frappe.log_error("token not doc","No doc" if not token_doc else "Doc")
+    if not token_doc:
         frappe.log_error("set token inside",type(token_response))
         cred = frappe.get_doc({
                 "doctype": "User Platform Credentials",
@@ -232,6 +234,7 @@ def set_token_response(token_response,platform,user=None):
         cred.insert()
         frappe.db.commit()
     else:
+        frappe.log_error("set token else",f"Doc available {token_doc}")
         cred = frappe.get_doc("User Platform Credentials",{"user":cur_user,"platform":platform})
         cred.access_token = token_response['access_token']
         cred.refresh_token = token_response['refresh_token'] if "refresh_token" in token_response else None
