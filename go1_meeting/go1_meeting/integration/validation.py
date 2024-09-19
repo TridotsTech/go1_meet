@@ -235,7 +235,7 @@ def set_token_response(token_response,platform,user=None):
         frappe.db.commit()
     else:
         frappe.log_error("set token else",f"Doc available {token_doc}")
-        cred = frappe.get_doc("User Platform Credentials",{"user":cur_user,"platform":platform})
+        cred = frappe.get_doc("User Platform Credentials",token_doc)
         cred.access_token = token_response['access_token']
         cred.refresh_token = token_response['refresh_token'] if "refresh_token" in token_response else None
         cred.save()
