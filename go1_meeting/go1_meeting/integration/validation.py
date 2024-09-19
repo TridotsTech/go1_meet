@@ -178,9 +178,9 @@ def google_oauth_callback(code=None):
     frappe.log_error()
     if response.status_code == 200:
         if response.json().get("access_token"):
+            frappe.log_error("gaccess_toke",response.json())
             if not frappe.db.exists("Google Calendar",{"user":"Administrator"}):
                 create_calendar(response.json())
-            frappe.log_error("gaccess_toke",response.json())
             set_token_response(response.json(),"Google Meet",user="Administrator")
             frappe.local.response["type"] = "redirect"
             frappe.local.response["location"] = f"/app/meeting-integration//{state_data.get('doc')}"
@@ -227,7 +227,7 @@ def create_calendar(token_respose):
         "description": "A calendar for go1 social gmeet meetings",
         "timeZone": frappe.db.get_value("User",frappe.session.user,"time_zone")
     }
-    headers = {"Authorizaton":f"Bearer {token_respose['access_token']}"}
+    headers = {"Authorization":f"Bearer {token_respose['access_token']}"}
     cal_response = requests.post(calendar_url,headers = headers,data = calendar_data)
     frappe.log_error("cal json",cal_response.json())
 
