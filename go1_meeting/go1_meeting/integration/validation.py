@@ -217,13 +217,14 @@ def get_teams_credentials():
     return client_id,client_secret,tenant_id,scopes
 
 def set_token_response(token_response,platform,user=None):
-    user = frappe.session.user if not user else user
+    cur_user = frappe.session.user if not user else user
+    frappe.log_error("cur user",cur_user)
     frappe.log_error("token_response set tokens",token_response)
-    if not frappe.db.exists("User Platform Credentials",{"user":user,"platform":platform}):
+    if not frappe.db.exists("User Platform Credentials",{"user":cur_user,"platform":platform}):
         frappe.log_error("set token inside",type(token_response))
         cred = frappe.get_doc({
                 "doctype": "User Platform Credentials",
-                "user":frappe.session.user if not user else user,
+                "user":cur_user,
                 "platform":platform,
                 "access_token":token_response['access_token'],
                 "refresh_token":token_response['refresh_token'] if "refresh_token" in token_response else None
@@ -231,7 +232,7 @@ def set_token_response(token_response,platform,user=None):
         cred.insert()
         frappe.db.commit()
     else:
-        cred = frappe.get_doc("User Platform Credentials",{"user":user,"platform":platform})
+        cred = frappe.get_doc("User Platform Credentials",{"user":cur_user,"platform":platform})
         cred.access_token = token_response['access_token']
         cred.refresh_token = token_response['refresh_token'] if "refresh_token" in token_response else None
         cred.save()
