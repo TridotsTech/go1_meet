@@ -451,17 +451,17 @@ frappe.ui.form.on("Go1 Meet", {
             }
         }
 
-        if(!frm.doc.url && frm.doc.status != "Cancelled" && state == "authorized"){
-            if(frm.doc.platform == "Google Meet"){
-                frappe.call({   
-                    method : "go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.check_calendar",
-                    args:{
-                        "doc":frm.doc
-                    },
+        // if(!frm.doc.url && frm.doc.status != "Cancelled" && state == "authorized"){
+        //     if(frm.doc.platform == "Google Meet"){
+        //         frappe.call({   
+        //             method : "go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.check_calendar",
+        //             args:{
+        //                 "doc":frm.doc
+        //             },
 
-                })
-            }
-        }
+        //         })
+        //     }
+        // }
     },
     platform(frm) {
         if (frm.doc.platform == "Zoom") {
