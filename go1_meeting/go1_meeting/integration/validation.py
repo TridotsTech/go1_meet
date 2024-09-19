@@ -225,12 +225,12 @@ def create_calendar(token_respose):
     calendar_data = {
         "summary": "Go1 Social",
         "description": "A calendar for go1 social gmeet meetings",
-        "timeZone": frappe.db.get_value("User",{"user":"Administrator"},"time_zone")
+        "timeZone": frappe.db.get_value("User",frappe.session.user,"time_zone")
     }
     headers = {"Authorizaton":f"Bearer {token_respose['access_token']}"}
     cal_response = requests.post(calendar_url,headers = headers,data = calendar_data)
     frappe.log_error("cal json",cal_response.json())
-    
+
 def validate_gmeet_user(doc):
     user = "Administrator"
     if not frappe.db.exists("User Platform Credentials",{"user":user,"platform":doc['platform']}):
