@@ -4,6 +4,7 @@
 import frappe,requests,msal,json,pytz
 from datetime import datetime,timedelta
 from frappe.model.document import Document
+
 from go1_meeting.go1_meeting.integration.validation import create_access_token_from_refresh_token,authorize_zoom
 
 class MeetingIntegration(Document):
@@ -423,3 +424,13 @@ def create_whereby_room(doc):
 			"status":"success",
 			"data":response.json()
 		}
+	
+
+@frappe.whitelist()
+def create_google_meet(doc,calendar=None):
+	if type(doc) == str:
+		doc = json.loads(doc)
+	google_meet = frappe.get_doc("Meeting Integration",{"platform":doc['platform']})
+	client_id = google_meet.client_id
+	client_secret = google_meet.get_password("client_secret")
+	# meet_url = ""

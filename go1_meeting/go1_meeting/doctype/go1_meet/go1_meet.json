@@ -22,6 +22,7 @@
   "passcode",
   "generate_meeting_id",
   "zoom_meeting_id",
+  "google_calendar",
   "waiting_room",
   "registered_meeting",
   "approval_for_registration",
@@ -73,12 +74,12 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval:doc.platform==\"Teams\"",
+   "depends_on": "eval:doc.platform==\"Teams\" || doc.platform == \"Google Meet\"",
    "fieldname": "to",
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "To",
-   "mandatory_depends_on": "eval:doc.platform==\"Teams\""
+   "mandatory_depends_on": "eval:doc.platform==\"Teams\" || doc.platform == \"Google Meet\""
   },
   {
    "fieldname": "section_break_vbrt",
@@ -113,10 +114,12 @@
   {
    "fieldname": "meeting_id",
    "fieldtype": "Small Text",
+   "hidden": 1,
    "label": "Meeting Id"
   },
   {
    "default": "0",
+   "depends_on": "eval:doc.platform == \"Teams\" || doc.platform == \"Zoom\"",
    "fieldname": "is_record_automatically",
    "fieldtype": "Check",
    "label": "Is Record Automatically",
@@ -242,7 +245,7 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:doc.is_record_automatically",
+   "depends_on": "eval:doc.is_record_automatically && doc.platform == \"WhereBy\"",
    "fieldname": "record_type",
    "fieldtype": "Select",
    "label": "Record Type",
@@ -274,11 +277,19 @@
    "fieldname": "room_prefix",
    "fieldtype": "Data",
    "label": "Room Prefix"
+  },
+  {
+   "depends_on": "eval:doc.platform == \"Google Meet\"",
+   "fieldname": "google_calendar",
+   "fieldtype": "Link",
+   "label": "Google Calendar",
+   "mandatory_depends_on": "eval:doc.platform == \"Google Meet\"",
+   "options": "Google Calendar"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-18 18:48:17.765019",
+ "modified": "2024-09-19 13:47:21.739178",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Go1 Meet",

@@ -178,10 +178,12 @@ def google_oauth_callback(code=None):
     frappe.log_error()
     if response.status_code == 200:
         if response.json().get("access_token"):
+            if not frappe.db.exists("Google Calendar",{"user":"Administrator"}):
+                create_calendar(response.json())
             frappe.log_error("gaccess_toke",response.json())
             set_token_response(response.json(),"Google Meet",user="Administrator")
             frappe.local.response["type"] = "redirect"
-            frappe.local.response["location"] = f"/app/go1-meet/{state_data.get('doc')}?state=authorized"
+            frappe.local.response["location"] = f"/app/meeting-integration//{state_data.get('doc')}"
 
 @frappe.whitelist()
 def authorize_user_access_token(doc):
@@ -199,7 +201,9 @@ def authorize_user_access_token(doc):
         else:
             return {"status":"authorized"}
     if doc['platform'] == "Google Meet":
-        return authorize_google(doc)
+        if doc['doctype'] == "Meeting Integration":
+            return authorize_google(doc)
+        return validate_gmeet_user(doc)
     if doc['platform'] == "WhereBy":
         whereby_cred = frappe.db.exists("Meeting Integration",{'platform':doc['platform']})
         if not whereby_cred:
@@ -216,6 +220,22 @@ def get_teams_credentials():
     scopes = ['User.Read', 'OnlineMeetings.ReadWrite']
     return client_id,client_secret,tenant_id,scopes
 
+def create_calendar(token_respose):
+    calendar_url = 'https://www.googleapis.com/calendar/v3/calendars'
+    calendar_data = {
+        "summary": "Go1 Social",
+        "description": "A calendar for go1 social gmeet meetings",
+        "timeZone": frappe.db.get_value("User",{"user":"Administrator"},"time_zone")
+    }
+    headers = {"Authorizaton":f"Bearer {token_respose['access_token']}"}
+    cal_response = requests.post(calendar_url,headers = headers,data = calendar_data)
+    frappe.log_error("cal json",cal_response.json())
+    
+def validate_gmeet_user(doc):
+    user = "Administrator"
+    if not frappe.db.exists("User Platform Credentials",{"user":user,"platform":doc['platform']}):
+        return {"status":"not_authorized"}
+    return {"status":"authorized"} 
 def set_token_response(token_response,platform,user=None):
     cur_user = frappe.session.user if not user else user
     frappe.log_error("cur user",cur_user)

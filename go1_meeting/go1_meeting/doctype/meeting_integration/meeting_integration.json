@@ -21,13 +21,13 @@
    "options": "Teams\nZoom\nGoogle Meet\nWhereBy"
   },
   {
-   "depends_on": "eval:doc.platform == \"Teams\" || doc.platform==\"Zoom\"",
+   "depends_on": "eval:doc.platform == \"Teams\" || doc.platform==\"Zoom\" || doc.platform == \"Google Meet\"",
    "fieldname": "client_id",
    "fieldtype": "Data",
    "label": "Client Id"
   },
   {
-   "depends_on": "eval:doc.platform == \"Teams\" || doc.platform==\"Zoom\"",
+   "depends_on": "eval:doc.platform == \"Teams\" || doc.platform==\"Zoom\" ||doc.platform == \"Google Meet\"",
    "fieldname": "client_secret",
    "fieldtype": "Password",
    "label": "Client Secret"
@@ -58,7 +58,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-17 17:56:19.470511",
+ "modified": "2024-09-19 15:53:52.609513",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Meeting Integration",
