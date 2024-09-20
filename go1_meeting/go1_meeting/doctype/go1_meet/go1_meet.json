@@ -138,7 +138,8 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Scheduled\nCancelled"
+   "options": "\nDraft\nScheduled\nCancelled",
+   "read_only": 1
   },
   {
    "fieldname": "event_id",
@@ -294,7 +295,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-19 20:28:34.190185",
+ "modified": "2024-09-20 12:53:12.681995",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Go1 Meet",

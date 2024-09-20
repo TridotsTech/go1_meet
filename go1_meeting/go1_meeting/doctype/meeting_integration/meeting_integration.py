@@ -200,7 +200,8 @@ def validate_user_credentials(headers, is_updated = None):
 		# frappe.log_error("user_directory if js",user_directory.json())
 		refresh_token = frappe.db.get_value("User Platform Credentials",
 				{"user":frappe.session.user,"platform":"Teams"},['refresh_token'])
-		token_response = create_access_token_from_refresh_token(refresh_token)
+		frappe.log_error("teams ref tk",refresh_token)
+		token_response = create_access_token_from_refresh_token("Teams",refresh_token)
 		if "access_token" in token_response:
 			exist = frappe.db.exists("User Platform Credentials",{"user":frappe.session.user,"platform":"Teams"})
 			if exist:
