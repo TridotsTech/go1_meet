@@ -96,16 +96,15 @@ frappe.ui.form.on("Go1 Meet", {
         if (!frm.doc.__islocal && !frm.doc.url && !frm.doc.__unsaved) {
             frm.add_custom_button(`Create ${platform} Meeting`, function () {
                 frappe.call({
-                    method: "go1_meeting.go1_meeting.integration.validation.",
+                    method: "go1_meeting.go1_meeting.integration.validation.authorize_user_access_token",
                     args: {
                         doc: frm.doc
                     },
                     freeze: true,
                     freeze_message: "Authenticating and create meeting...",
                     callback(r) {
-                        console.log(r.message)
+                        // console.log(r.message)
                         if (r.message) {
-
                             if (frm.doc.platform == "Teams") {
                                 if (r.message.status == "not_authorized") {
                                     window.location.href = r.message.message
@@ -176,10 +175,12 @@ frappe.ui.form.on("Go1 Meet", {
                                         freeze_message : "Creating Google Meet...",
                                         callback(r){
                                             console.log(r.message)
-                                            // if(r.message){
-                                            //     frm.set_value("url",r.message)
-                                            //     frm.save()
-                                            // }
+                                            if(r.message && r.message.status == "success"){
+                                                frm.set_value("url",r.message.message.hangoutLink)
+                                                frm.set_value("meeting_id",r.message.message.id)
+                                                frm.set_value("g_calendar_id",r.message.calendar_id)
+                                                frm.save()
+                                            }
                                         }
                                     })
                                 }
@@ -409,6 +410,27 @@ frappe.ui.form.on("Go1 Meet", {
                             }
                         })
                     }
+                    else if(frm.doc.platform == "Google Meet"){
+                        frappe.call({
+                            method: "go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.cancel_event",
+                            args: {
+                                event_id: frm.doc.meeting_id,
+                                platform: frm.doc.platform,
+                                doc: frm.doc
+                            },
+                            freeze: true,
+                            freeze_message: "cancelling meeting",
+                            callback(r) {
+                                if (r.message) {
+                                    console.log(r.message)
+                                    if (r.message.status == "success") {
+                                        frm.set_value("status", "Cancelled")
+                                        frm.save()
+                                    }
+                                }
+                            }
+                        })
+                    }
                     else if(frm.doc.platform == "WhereBy"){
                         frappe.call({
                             method: "go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.cancel_event",
@@ -439,29 +461,8 @@ frappe.ui.form.on("Go1 Meet", {
                 frm.add_custom_button("Join Meeting", function () {
                     window.open(`/app/whereby-embed?meeting_id=${frm.doc.host_room_url}`,'_blank')
                 })
-                // frm.add_custom_button("Customize Room",function(){
-                //     let d = 
-                // })
-            }
-            if(frm.doc.platform == "Google Meet"){
-                frm.add_custom_button('Add Calendar',{
-                    method:"go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.create_gmeet",
-                    
-                })
             }
         }
-
-        // if(!frm.doc.url && frm.doc.status != "Cancelled" && state == "authorized"){
-        //     if(frm.doc.platform == "Google Meet"){
-        //         frappe.call({   
-        //             method : "go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.check_calendar",
-        //             args:{
-        //                 "doc":frm.doc
-        //             },
-
-        //         })
-        //     }
-        // }
     },
     platform(frm) {
         if (frm.doc.platform == "Zoom") {

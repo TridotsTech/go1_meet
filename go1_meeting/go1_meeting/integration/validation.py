@@ -60,21 +60,36 @@ def create_access_token(doc,usr,pwd):
                 # cred.save()
                 # frappe.db.commit()
 
-def create_access_token_from_refresh_token(refresh_token):
-    teams_credential = frappe.get_doc("Meeting Integration",{"platform":"Teams"})
-    client_id = teams_credential.client_id
-    client_secret = teams_credential.get_password("client_secret")
-    tenant_id = teams_credential.tenant_id
-    authority = f"https://login.microsoftonline.com/{tenant_id}"
-    scopes = ['User.Read','User.Read.All', 'OnlineMeetings.ReadWrite']
-    msal_app = msal.ConfidentialClientApplication(
-    client_id,
-    authority=authority,
-    client_credential=client_secret
-    )
+def create_access_token_from_refresh_token(platform,refresh_token):
+    if platform == "Teams":
+        teams_credential = frappe.get_doc("Meeting Integration",{"platform":"Teams"})
+        client_id = teams_credential.client_id
+        client_secret = teams_credential.get_password("client_secret")
+        tenant_id = teams_credential.tenant_id
+        authority = f"https://login.microsoftonline.com/{tenant_id}"
+        scopes = ['User.Read','User.Read.All', 'OnlineMeetings.ReadWrite']
+        msal_app = msal.ConfidentialClientApplication(
+        client_id,
+        authority=authority,
+        client_credential=client_secret
+        )
 
-    token_response = msal_app.acquire_token_by_refresh_token(refresh_token, scopes=scopes)
-    return token_response
+        token_response = msal_app.acquire_token_by_refresh_token(refresh_token, scopes=scopes)
+        return token_response
+    if platform == "Google Meet":
+        token_url = 'https://oauth2.googleapis.com/token'
+        gmeet_cred = frappe.get_doc("Meeting Integration",{"platform":"Google Meet"})
+        payload = {
+            'grant_type': 'refresh_token',
+            'client_id': gmeet_cred.get_password("client_id"),
+            'client_secret': gmeet_cred.get_password("client_secret"),
+            'refresh_token': refresh_token
+        }
+        refresh_resp = requests.post(url = token_url, data = payload)
+        frappe.log_error("refresh token",refresh_resp.json())
+        if refresh_resp.status_code == 200:
+            set_token_response(refresh_resp.json(),platform = "Google Meet",user = "Administrator")
+            return {'status':"success",'message':refresh_resp.json()}
 
 @frappe.whitelist()
 def _redirect_uri(doc):
@@ -239,10 +254,29 @@ def create_calendar(token_respose,doc_name):
         frappe.db.commit()
 
 def validate_gmeet_user(doc):
+    if type(doc) == str:
+        doc = json.loads(doc)
     user = "Administrator"
-    if not frappe.db.exists("User Platform Credentials",{"user":user,"platform":doc['platform']}):
+    frappe.log_error("doc plat",doc['platform'])
+    cred = frappe.db.exists("User Platform Credentials",{"user":user,"platform":doc['platform']})
+    if not cred:
         return {"status":"not_authorized"}
-    return {"status":"authorized"} 
+    cred_doc = frappe.get_doc("User Platform Credentials",cred)
+    headers = {"Authorization":f"Bearer {cred_doc.get('access_token')}",
+               "Content-Type": "application/json"}
+    cal_list = requests.get("https://www.googleapis.com/calendar/v3/users/me/calendarList",headers = headers)
+    frappe.log_error("cal list sts",cal_list.status_code)
+    frappe.log_error("cal list json",cal_list.json())
+    if cal_list.status_code == 200:
+        return {"status":"authorized"} 
+    
+    resp = create_access_token_from_refresh_token("Google Meet",cred_doc.refresh_token)
+    frappe.log_error("ref resp",resp)
+    if 'access_token' in resp.get('message'):
+        return {"status":"authorized"}
+    else:
+        return {"status":"not_authorized","message":"Kindly Check the Client Credentials"}
+
 def set_token_response(token_response,platform,user=None):
     cur_user = frappe.session.user if not user else user
     frappe.log_error("cur user",cur_user)
@@ -264,7 +298,8 @@ def set_token_response(token_response,platform,user=None):
         frappe.log_error("set token else",f"Doc available {token_doc}")
         cred = frappe.get_doc("User Platform Credentials",token_doc)
         cred.access_token = token_response['access_token']
-        cred.refresh_token = token_response['refresh_token'] if "refresh_token" in token_response else None
+        if "refresh_token" in token_response:
+            cred.refresh_token = token_response['refresh_token']
         cred.save()
         frappe.db.commit()
 

@@ -4,7 +4,7 @@
 import frappe,requests,msal,json,pytz
 from datetime import datetime,timedelta
 from frappe.model.document import Document
-
+from go1_meeting.go1_meeting.integration.validation import validate_gmeet_user
 from go1_meeting.go1_meeting.integration.validation import create_access_token_from_refresh_token,authorize_zoom
 
 class MeetingIntegration(Document):
@@ -165,6 +165,19 @@ def cancel_event(event_id,platform,doc = None):
 		whereby_doc = frappe.get_doc("Meeting Integration",{"platform":platform})
 		url = f"https://api.whereby.dev/v1/meetings/{event_id}"
 		headers = {"Authorization":f"Bearer {whereby_doc.get('api_key')}"}
+	elif platform == "Google Meet":
+		validate = validate_gmeet_user(doc)
+		frappe.log_error("validate cancel",validate)
+		if validate.get("status") == "authorized":
+			cred_doc = frappe.get_doc("Meeting Integration",{"platform":platform})
+			calendar_id = cred_doc.calendar_id
+			url = f"https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events/{event_id}"
+			access_token = frappe.db.get_value("User Platform Credentials",
+										{"user":"Administrator","platform":platform},['access_token'])
+			frappe.log_error("access cance;",access_token)
+			headers = {
+				"Authorization": f"Bearer {access_token}"
+			}
 	frappe.log_error("WhereBy",headers)
 	response = requests.delete(url = url, headers=headers)
 	frappe.log_error("cancel response",response.status_code)
@@ -427,10 +440,61 @@ def create_whereby_room(doc):
 	
 
 @frappe.whitelist()
-def create_google_meet(doc,calendar=None):
+def create_google_meet(doc):
+	import uuid
 	if type(doc) == str:
 		doc = json.loads(doc)
 	google_meet = frappe.get_doc("Meeting Integration",{"platform":doc['platform']})
 	client_id = google_meet.client_id
 	client_secret = google_meet.get_password("client_secret")
-	# meet_url = ""
+	calendar_id = google_meet.calendar_id
+	meet_url = f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events?conferenceDataVersion=1'
+	access_doc = frappe.get_doc("User Platform Credentials",{"user":"Administrator","platform":"Google Meet"})
+	headers = {"Authorization": f"Bearer {access_doc.get('access_token')}","Content-Type":"application/json"}
+	start_time ,end_time = convert_local_to_utc(doc['from'],doc['to'])
+	participants =[]
+	if doc['participants']:
+		for participant in doc['participants']:
+			participants.append({"email":participant['user']})
+	if doc['external_participants']:
+		for participant in doc['external_participants']:
+			participants.append({"email":participant['email']})
+	payload = {
+		"summary":doc['subject'],
+		"description":doc['description'] if doc.get("description") else "",
+		"start": {
+			"dateTime":datetime.strftime(start_time,"%Y-%m-%dT%H:%M:%SZ"),
+			"timeZone":frappe.db.get_value("User",frappe.session.user,"time_zone")
+		},
+		"end": {
+			"dateTime": datetime.strftime(end_time,"%Y-%m-%dT%H:%M:%SZ"),
+			"timeZone": frappe.db.get_value("User",frappe.session.user,"time_zone")
+    	},
+		"attendees":participants,
+		"conferenceData": {
+			"createRequest": {
+				"conferenceSolutionKey": {
+					"type": "hangoutsMeet"
+				},
+				"requestId": str(uuid.uuid4())  # Unique identifier for the conference
+			}
+    	},
+		"reminders": {
+			"useDefault": False,
+			"overrides": [
+				{"method": "email", "minutes": 24 * 60},  # Send email reminder 1 day before
+				{"method": "popup", "minutes": 10}       # Show popup reminder 10 minutes before
+			]
+		}
+	}
+
+	frappe.log_error("payload",payload)
+	meet_resp = requests.post(url = meet_url,headers = headers,json = payload)
+	frappe.log_error("meet_resp",meet_resp.json())
+	if meet_resp.status_code == 200:
+		return{
+			"status":"success",
+			"message":meet_resp.json(),
+			"calendar_id":calendar_id
+		}
+	

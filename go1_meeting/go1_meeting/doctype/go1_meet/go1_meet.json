@@ -15,6 +15,7 @@
   "enable_video_for_participant",
   "mute_participants_upon_entry",
   "room_type",
+  "g_calendar_id",
   "column_break_nypf",
   "is_record_automatically",
   "is_online_meeting",
@@ -52,7 +53,7 @@
    "options": "Teams\nGoogle Meet\nZoom\nWhereBy"
   },
   {
-   "depends_on": "eval:doc.platform == \"Zoom\" && doc.platform == \"Teams\" && doc.platform == \"Google Meet\"",
+   "depends_on": "eval:doc.platform == \"Zoom\" || doc.platform == \"Teams\" || doc.platform == \"Google Meet\"",
    "fieldname": "subject",
    "fieldtype": "Data",
    "label": "Subject"
@@ -156,7 +157,7 @@
    "label": "attendance"
   },
   {
-   "depends_on": "eval:doc.platform==\"Zoom\"",
+   "depends_on": "eval:doc.platform==\"Zoom\" || doc.platform == \"Google Meet\"",
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
@@ -279,17 +280,21 @@
    "label": "Room Prefix"
   },
   {
-   "depends_on": "eval:doc.platform == \"Google Meet\"",
    "fieldname": "google_calendar",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Google Calendar",
-   "mandatory_depends_on": "eval:doc.platform == \"Google Meet\"",
-   "options": "Google Calendar"
+   "read_only": 1
+  },
+  {
+   "fieldname": "g_calendar_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Calendar Id"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-19 13:47:21.739178",
+ "modified": "2024-09-19 20:28:34.190185",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Go1 Meet",
