@@ -525,10 +525,21 @@ def compose_zoom_mail(data,doc):
 		for i in doc['external_participants']:
 			frappe.log_error("i",type(i))
 			participants.append(i['email'])
-	message=f"{frappe.session.user} is inviting you to scheduled {doc['platform']} meeting"
+	name = frappe.db.get_value("User",frappe.session.user,"full_name")
 	local_time = datetime.strptime(convert_utc_to_local(data['start_time']),"%Y-%m-%d %H:%M:%S")
 	formatted_time = local_time.strftime('%b %d,%Y %I:%M %p')
-	message+=f"""\n \nTopic: {data['topic']}\nTime: {formatted_time}
-	\nJoin Zoom Meeting\n{data['join_url']}\n\nMeeting ID:{data['id']}\nPasscode:{data['password']}"""
+	message=f"""
+	<p>{name} is inviting you to a scheduled Zoom Meeting.</p>
+	<br><br>
+	<p>Topic: {data['topic']}</p>
+	<br>
+	<p>Time: {formatted_time} </p>
+	<br>
+	<p>Join Zoom Meeting</p>
+	<br>{data['join_url']}
+	<br><br>
+	<p>Meeting ID:{data['id']}</p>
+	<br>
+	<p>Passcode:{data['password']}</p>"""
 	frappe.log_error("mail content",message)
 	return message , participants
