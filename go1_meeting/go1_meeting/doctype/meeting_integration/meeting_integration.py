@@ -408,7 +408,7 @@ def create_zoom_meeting(token , doc):
 	frappe.log_error("meeting response code",meeting_response.status_code)
 	if meeting_response.status_code == 201:
 		frappe.log_error("meeting_response",meeting_response.json())
-		# send_mail_notification(meeting_response.json(),doc)
+		send_mail_notification(meeting_response.json(),doc)
 		return meeting_response.json()
 
 @frappe.whitelist()
@@ -508,8 +508,7 @@ def create_google_meet(doc):
 			"message":meet_resp.json(),
 			"calendar_id":calendar_id
 		}
-	
-@frappe.whitelist()
+#Send mail notification for whereby and Zoom
 def send_mail_notification(data,doc):
 	if doc['platform'] == "Zoom":
 		data , recipients = compose_zoom_mail(data,doc)
