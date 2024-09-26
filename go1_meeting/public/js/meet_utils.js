@@ -111,6 +111,8 @@ go1_meeting.meeting.zoom_meeting_callback = function (frm, r) {
                             frm.set_value("zoom_meeting_id", r.message.id)
                         }
                         frm.set_value("url", r.message.join_url)
+                        frm.set_value("host_room_url",r.message.start_url)
+                        frm.set_value("status","Scheduled")
                         frm.save()
                     }
                 }
@@ -269,7 +271,7 @@ go1_meeting.meeting.edit_meeting = function(frm,args,d){
 }
 
 go1_meeting.meeting.join_meeting = function(frm){
-    if(frm.doc.host_room_url && frm.doc.status != "Cancelled"){
+    if(frm.doc.platform == "WhereBy" && frm.doc.host_room_url && frm.doc.status != "Cancelled"){
         frm.add_custom_button("Join Meeting", function () {
             window.open(`/app/whereby-embed?meeting_id=${frm.doc.host_room_url}`,'_blank')
         })

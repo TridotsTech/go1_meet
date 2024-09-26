@@ -407,6 +407,7 @@ def create_zoom_meeting(token , doc):
 	meeting_response = requests.post(url = url,headers = headers , json= data)
 	frappe.log_error("meeting response code",meeting_response.status_code)
 	if meeting_response.status_code == 201:
+		send_mail_notification(meeting_response.json(),doc)
 		frappe.log_error("meeting_response",meeting_response.json())
 		return meeting_response.json()
 
@@ -508,5 +509,26 @@ def create_google_meet(doc):
 			"calendar_id":calendar_id
 		}
 	
-# def send_notification_mail(data,receipients):
-# 	frappe.sendmail()
+@frappe.whitelist()
+def send_mail_notification(data,doc):
+	if doc['platform'] == "Zoom":
+		data , recipients = compose_zoom_mail(data,doc)
+		frappe.log_error("data",data)
+		frappe.log_error("receipients",recipients)
+	frappe.sendmail(recipients = recipients,message = data,subject = f"{doc['platform']} meeting invitation")
+
+def compose_zoom_mail(data,doc):
+	participants=[]
+	for i in doc['participants']:
+		participants.append(i.get('user'))
+	if doc['external_participants']:
+		for i in doc['external_participants']:
+			frappe.log_error("i",type(i))
+			participants.append(i['email'])
+	message=f"{frappe.session.user} is inviting you to scheduled {doc['platform']} meeting"
+	local_time = datetime.strptime(convert_utc_to_local(data['start_time']),"%Y-%m-%d %H:%M:%S")
+	formatted_time = local_time.strftime('%b %d,%Y %I:%M %p')
+	message+=f"""\n \nTopic: {data['topic']}\nTime: {formatted_time}
+	\nJoin Zoom Meeting\n{data['join_url']}\n\nMeeting ID:{data['id']}\nPasscode:{data['password']}"""
+	frappe.log_error("mail content",message)
+	return message , participants

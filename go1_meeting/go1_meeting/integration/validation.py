@@ -8,7 +8,7 @@ def validate_user(doc):
     if not frappe.db.exists("User Platform Credentials",{"user":frappe.session.user,"platform":doc['platform']}):
         return "invalid Credentials"
     
-#Fetch users to validate the access token
+#Fetch users to validate the teams access token
 @frappe.whitelist()
 def fetch_users(access_token):
     headers = {"Authorization": "Bearer " + access_token}

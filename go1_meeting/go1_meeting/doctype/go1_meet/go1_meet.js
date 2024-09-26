@@ -65,6 +65,21 @@ frappe.ui.form.on("Go1 Meet", {
         }
 
         if (frm.doc.url && frm.doc.status != "Cancelled") {
+            frm.add_custom_button('Send Mail',function(){
+                frappe.call({
+                    method:"go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.send_mail_notification",
+                    args:{
+                        doc:frm.doc
+                    },
+                    freeze:true,
+                    freeze_message:"Sending mail...",
+                    callback(r){
+                        if(r.message){
+                            console.log(r.message)
+                        }
+                    }
+                })
+            })
             if (frm.doc.platform == "Teams" || frm.doc.platform == "Zoom") {
                 go1_meeting.meeting.call_edit_meeting(frm)
                 frm.add_custom_button("Fetch Attendence", function () {

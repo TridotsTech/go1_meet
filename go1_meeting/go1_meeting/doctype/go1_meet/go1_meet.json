@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:GO1-{platform}-MEETING-{#####}",
+ "autoname": "format:GO1-{platform}-{#####}",
  "creation": "2024-09-03 19:39:40.074125",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -93,13 +93,13 @@
    "fieldtype": "Table",
    "label": "Participants",
    "mandatory_depends_on": "eval:doc.platform==\"Teams\" || doc.platform==\"Zoom\" || doc.platform==\"Google Meet\"",
-   "options": "Meeting Participants"
+   "options": "Meeting Participant"
   },
   {
    "fieldname": "external_participants",
    "fieldtype": "Table",
    "label": "External Participants",
-   "options": "Meeting External Participants"
+   "options": "Meeting External Participant"
   },
   {
    "fieldname": "column_break_nypf",
@@ -306,7 +306,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-23 12:54:32.738964",
+ "modified": "2024-09-26 14:50:18.830842",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Go1 Meet",
