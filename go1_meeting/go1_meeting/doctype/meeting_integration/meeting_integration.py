@@ -407,8 +407,8 @@ def create_zoom_meeting(token , doc):
 	meeting_response = requests.post(url = url,headers = headers , json= data)
 	frappe.log_error("meeting response code",meeting_response.status_code)
 	if meeting_response.status_code == 201:
-		send_mail_notification(meeting_response.json(),doc)
 		frappe.log_error("meeting_response",meeting_response.json())
+		# send_mail_notification(meeting_response.json(),doc)
 		return meeting_response.json()
 
 @frappe.whitelist()

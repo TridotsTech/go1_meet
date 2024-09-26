@@ -233,7 +233,7 @@ go1_meeting.meeting.call_edit_meeting = function (frm) {
                         "duration": value.duration
                     }
                 }
-                this.edit_meeting(frm,args,d)
+                go1_meeting.meeting.edit_meeting(frm, args, d)
             }
         })
         d.fields_dict['subject'].value = frm.doc.subject
@@ -254,16 +254,16 @@ go1_meeting.meeting.edit_meeting = function(frm,args,d){
             console.log(r.message)
             if (r.message) {
                 if (r.message.status == "success") {
+                    d.hide()
                     frappe.show_alert({
                         message: "Meeting updated successfully",
                         indicator: "green"
                     }, 5)
-                    frm.set_value("subject", value.subject)
-                    frm.set_value("from", value.from_time)
-                    if (frm.doc.platform == "Zoom") { frm.set_value("duration", value.duration) }
-                    if (frm.doc.platform == "Teams") { frm.set_value("to", value.to_time) }
+                    frm.set_value("subject", args.subject)
+                    frm.set_value("from", args.from_time)
+                    if (frm.doc.platform == "Zoom") { frm.set_value("duration", args.duration) }
+                    if (frm.doc.platform == "Teams") { frm.set_value("to", args.to_time) }
                     frm.save()
-                    d.hide()
                 }
             }
         }

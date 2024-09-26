@@ -241,7 +241,6 @@
    "options": "Auto\nManual"
   },
   {
-   "depends_on": "eval:doc.platform==\"WhereBy\"",
    "fieldname": "host_room_url",
    "fieldtype": "Small Text",
    "label": "Host Room URL",
@@ -306,7 +305,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-26 14:50:18.830842",
+ "modified": "2024-09-26 17:58:11.654893",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Go1 Meet",

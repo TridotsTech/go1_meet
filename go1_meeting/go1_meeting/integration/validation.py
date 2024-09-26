@@ -187,12 +187,17 @@ def authorize_user_access_token(doc):
             }
         return{"status":"success","message":"authorized"}
 def get_teams_credentials():
-    cred_doc = frappe.get_doc("Meeting Integration",{"platform":"Teams"})
-    client_id = cred_doc.client_id
-    client_secret = cred_doc.get_password("client_secret")
-    tenant_id = cred_doc.tenant_id
-    scopes = ['User.Read', 'OnlineMeetings.ReadWrite']
-    return client_id,client_secret,tenant_id,scopes
+    exists = frappe.db.exists("Meeting Integration",{"platform":"Teams"})
+    if exists:
+        cred_doc = frappe.get_doc("Meeting Integration",{"platform":"Teams"})
+        client_id = cred_doc.client_id
+        client_secret = cred_doc.get_password("client_secret")
+        tenant_id = cred_doc.tenant_id
+        scopes = ['User.Read', 'OnlineMeetings.ReadWrite']
+        return client_id,client_secret,tenant_id,scopes
+    else:
+        frappe.throw("Enter the credentials for Teams in Meeting Integration")
+
 
 def create_calendar(token_respose,doc_name):
     calendar_url = 'https://www.googleapis.com/calendar/v3/calendars'
