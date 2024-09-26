@@ -317,9 +317,12 @@ def get_attendance(doc):
 			url = f"https://graph.microsoft.com/v1.0/me/onlineMeetings/{doc['meeting_id']}/attendanceReports",
 			headers = headers
 		)
-		attendance_data = attendance.json()
-		# frappe.log_error("attendance data",[meeting_id,attendance_data])
-		return fetch_teams_attendance_reports(doc['meeting_id'],attendance_data['value'][0]['id'])
+		if attendance_data:
+			attendance_data = attendance.json()
+			# frappe.log_error("attendance data",[meeting_id,attendance_data])
+			return fetch_teams_attendance_reports(doc['meeting_id'],attendance_data['value'][0]['id'])
+		else:
+			return {"status":"pending","message":"Meeting not yet started"}
 	elif doc['platform'] == "Zoom":
 		fetch_zoom_attendance_report(doc)
 
@@ -409,8 +412,14 @@ def create_zoom_meeting(token , doc):
 
 @frappe.whitelist()
 def create_whereby_room(doc):
+	import re
 	if type(doc) == str:
 		doc = json.loads(doc)
+		if doc['room_prefix']:
+			room_prefix = doc['room_prefix'].lower()
+			room_prefix_formatted = re.sub(r'[_\s]+', '-', room_prefix)  # Replace spaces/underscores with hyphen
+			room_prefix_formatted = re.sub(r'[^\w-]', '', room_prefix_formatted)  
+	# frappe.log_error('room_prefix_formatted',room_prefix_formatted)
 	where_doc = frappe.get_doc("Meeting Integration",{"platform":doc['platform']})
 	headers = {"Authorization": f"Bearer {where_doc.get('api_key')}",
 				"Content-Type":"application/json"}	
@@ -420,7 +429,7 @@ def create_whereby_room(doc):
 		"endDate":datetime.strftime(end_date,"%Y-%m-%dT%H:%M:%SZ"),
 		"isLocked":False if not doc['is_secured'] else True,
 		"roomMode":"group" if doc['room_type'] == "Group" else "normal",
-		# "roomNamePrefix":,
+		"roomNamePrefix": room_prefix_formatted if doc.get("room_prefix") else "",
 		"fields": ["hostRoomUrl", "viewerRoomUrl"],
 	}
 	if doc.get("streaming"):
@@ -499,3 +508,5 @@ def create_google_meet(doc):
 			"calendar_id":calendar_id
 		}
 	
+# def send_notification_mail(data,receipients):
+# 	frappe.sendmail()

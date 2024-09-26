@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:{platform} MI {YY}-{MM}-{DD}-{##}",
  "creation": "2024-08-23 10:37:44.252154",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -70,10 +71,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-19 17:20:09.252872",
+ "modified": "2024-09-24 10:38:51.519971",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Meeting Integration",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

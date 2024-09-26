@@ -8,7 +8,7 @@ def validate_user(doc):
     if not frappe.db.exists("User Platform Credentials",{"user":frappe.session.user,"platform":doc['platform']}):
         return "invalid Credentials"
     
-
+#Fetch users to validate the access token
 @frappe.whitelist()
 def fetch_users(access_token):
     headers = {"Authorization": "Bearer " + access_token}
@@ -17,48 +17,7 @@ def fetch_users(access_token):
 			headers=headers
 		)
     return user_directory.json()
-#Create access token from username and password
-@frappe.whitelist()
-def create_access_token(doc,usr,pwd):
-    doc = json.loads(doc)
-    # frappe.log_error("doc",doc['platform'])
-    # frappe.log_error("doc type",type(doc['platform']))
-    if doc['platform'] == "Teams":
-        if not frappe.db.exists("User Platform Credentials",{"user":frappe.session.user,"platform":"Teams"}):
-            teams_credential = frappe.get_doc("Meeting Integration",{"platform":"Teams"})
-            client_id = teams_credential.client_id
-            client_secret = teams_credential.get_password("client_secret")
-            tenant_id = teams_credential.tenant_id
-            authority = f"https://login.microsoftonline.com/{tenant_id}"
-            scopes = ['User.Read','User.Read.All', 'OnlineMeetings.ReadWrite']
-            # frappe.log_error("args",(usr,pwd))
-            msal_app = msal.ConfidentialClientApplication(
-            client_id,
-            authority=authority,
-            client_credential=client_secret
-            )
 
-            token_response = msal_app.acquire_token_by_username_password(
-                username=usr,
-                password=pwd,
-                scopes = scopes
-            )
-            # frappe.log_error("token_response",token_response)
-            if 'access_token' in token_response:
-                cred = frappe.get_doc({
-                    "doctype": "User Platform Credentials",
-                    "user":frappe.session.user,
-                    "platform":doc.get("platform"),
-                    "access_token":token_response['access_token'],
-                    "refresh_token":token_response['refresh_token']
-                })
-                cred.insert()
-                # cred.user = frappe.session.user
-                # cred.platform = doc['platform'],
-                # cred.access_token = token_response['access_token']
-                # cred.refresh_token = token_response['refresh_token']
-                # cred.save()
-                # frappe.db.commit()
 
 def create_access_token_from_refresh_token(platform,refresh_token):
     if platform == "Teams":
@@ -97,7 +56,7 @@ def _redirect_uri(doc):
         client_id , client_secret , tenant_id , scopes = get_teams_credentials()
         authority = f"https://login.microsoftonline.com/{tenant_id}"
         msal_app = msal.ClientApplication(client_id, authority=authority, client_credential=client_secret)
-        redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
+        redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_callback')
         frappe.log_error("redirect_uri",redirect_uri)
         # Generate authorization URL
         auth_url = msal_app.get_authorization_request_url(scopes, redirect_uri=redirect_uri)
@@ -111,12 +70,12 @@ def _redirect_uri(doc):
     return auth_url
 
 @frappe.whitelist(allow_guest = True)
-def teams_oauth_calback(code = None):
+def teams_oauth_callback(code = None):
     if not code:
         frappe.throw("Authorization code not found")
     client_id , client_secret , tenant_id , scopes = get_teams_credentials()
     frappe.log_error("teams credentials",[client_id , client_secret , tenant_id , scopes])
-    redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
+    redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_callback')
     authority = f"https://login.microsoftonline.com/{tenant_id}"
     frappe.log_error("code",code)
     msal_app = msal.ConfidentialClientApplication(
@@ -330,34 +289,37 @@ def generate_zoom_token(doc):
 def authorize_zoom(doc):
     if type(doc) ==  str:
         doc = json.loads(doc)
-    if not frappe.db.exists("User Platform Credentials",
-                            {"user":"Administrator",
-                             "platform":doc['platform']}):
-        #Generate access token
-        return generate_zoom_token(doc)
+    if frappe.db.exists("Meeting Integration",{"platform":"Zoom"}):
+        if not frappe.db.exists("User Platform Credentials",
+                                {"user":"Administrator",
+                                "platform":doc['platform']}):
+            #Generate access token
+            return generate_zoom_token(doc)
+        else:
+            credentials = frappe.get_doc("User Platform Credentials",
+                                        {"user":"Administrator",
+                                        "platform":doc['platform']
+                                        })
+            if credentials.get('access_token'):
+                validate_url = "https://api.zoom.us/v2/users/me"
+                headers={
+                    "Authorization": "Bearer " + credentials.get('access_token'),
+                    "Content-Type": "application/json"
+                }
+                response = requests.get(url=validate_url,headers=headers)
+                frappe.log_error("autorize zoom",response.status_code)
+                if response.status_code != 200:
+                    frappe.log_error("returning staus !200",generate_zoom_token(doc))
+                    return generate_zoom_token(doc)
+                frappe.log_error("returning",credentials.get('access_token'))
+                return {
+                    "status":"success",
+                    "message":"authorized",
+                    "access_token":credentials.get('access_token'),
+                    "auth_response":response.json()
+                }
     else:
-        credentials = frappe.get_doc("User Platform Credentials",
-                                     {"user":"Administrator",
-                                      "platform":doc['platform']
-                                      })
-        if credentials.get('access_token'):
-            validate_url = "https://api.zoom.us/v2/users/me"
-            headers={
-                "Authorization": "Bearer " + credentials.get('access_token'),
-                "Content-Type": "application/json"
-            }
-            response = requests.get(url=validate_url,headers=headers)
-            frappe.log_error("autorize zoom",response.status_code)
-            if response.status_code != 200:
-                frappe.log_error("returning staus !200",generate_zoom_token(doc))
-                return generate_zoom_token(doc)
-            frappe.log_error("returning",credentials.get('access_token'))
-            return {
-                "status":"success",
-                "message":"authorized",
-                "access_token":credentials.get('access_token'),
-                "auth_response":response.json()
-            }
+        frappe.throw("Enter the credentials for Zoom in Meeting Integration")
 
 def authorize_google(doc):
     google_meet = frappe.get_doc("Meeting Integration",{"platform":doc['platform']})

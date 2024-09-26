@@ -11,25 +11,27 @@
   "status",
   "room_prefix",
   "description",
-  "enable_video_for_host",
-  "enable_video_for_participant",
-  "mute_participants_upon_entry",
   "room_type",
   "g_calendar_id",
   "column_break_nypf",
   "is_record_automatically",
-  "is_online_meeting",
   "is_secured",
   "passcode",
   "generate_meeting_id",
   "zoom_meeting_id",
   "google_calendar",
-  "waiting_room",
-  "registered_meeting",
-  "approval_for_registration",
   "url",
   "host_room_url",
+  "advance_options_section",
+  "is_online_meeting",
+  "registered_meeting",
+  "enable_video_for_host",
+  "approval_for_registration",
+  "column_break_uqil",
+  "waiting_room",
   "record_type",
+  "enable_video_for_participant",
+  "mute_participants_upon_entry",
   "section_break_yxkw",
   "from",
   "start_date",
@@ -87,7 +89,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval:doc.platform==\"Teams\" || doc.platform==\"Zoom\" || doc.platform==\"Google Meet\"",
    "fieldname": "participants",
    "fieldtype": "Table",
    "label": "Participants",
@@ -95,7 +96,6 @@
    "options": "Meeting Participants"
   },
   {
-   "depends_on": "eval:doc.platform==\"Teams\" || doc.platform==\"Zoom\" || doc.platform==\"Google Meet\"",
    "fieldname": "external_participants",
    "fieldtype": "Table",
    "label": "External Participants",
@@ -148,6 +148,7 @@
    "label": "Event Id"
   },
   {
+   "depends_on": "eval:doc.url",
    "fieldname": "attendance_tab",
    "fieldtype": "Tab Break",
    "label": "Attendance"
@@ -276,6 +277,7 @@
   },
   {
    "depends_on": "eval:doc.platform == \"WhereBy\"",
+   "description": "Prefixes make it easy to find this room on the rooms page. Should be lowercase with no spaces. eg.all-hands",
    "fieldname": "room_prefix",
    "fieldtype": "Data",
    "label": "Room Prefix"
@@ -291,11 +293,20 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Calendar Id"
+  },
+  {
+   "fieldname": "advance_options_section",
+   "fieldtype": "Section Break",
+   "label": "Advance Options"
+  },
+  {
+   "fieldname": "column_break_uqil",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-20 12:53:12.681995",
+ "modified": "2024-09-23 12:54:32.738964",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Go1 Meet",
