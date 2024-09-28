@@ -137,6 +137,7 @@ go1_meeting.meeting.google_meet_callback = function (frm, r) {
                     frm.set_value("url", r.message.message.hangoutLink)
                     frm.set_value("meeting_id", r.message.message.id)
                     frm.set_value("g_calendar_id", r.message.calendar_id)
+                    frm.set_value("status","Scheduled")
                     frm.save()
                 }
             }

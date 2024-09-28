@@ -557,13 +557,11 @@ def compose_whereby_notification(data,doc):
 			frappe.log_error("i",type(i))
 			participants.append(i['email'])
 	name = frappe.db.get_value("User",frappe.session.user,"full_name")
-	local_time = datetime.strptime(convert_utc_to_local(data['start_time']),"%Y-%m-%d %H:%M:%S")
-	formatted_time = local_time.strftime('%b %d,%Y %I:%M %p')
 	message=f"""
 	<p>{name} is inviting you to a scheduled Whereby Meeting.</p>
 	<br>
 	<p>Topic: {data['topic']}</p>
-	<p>Time: {formatted_time} </p>
+	<p>Start Date: {data['start_date']} </p>
 	<br>
 	<p>Join Whereby Meeting</p>
 	<a href="{data['join_url']}">{data['join_url']}</a>"""
