@@ -320,7 +320,10 @@ def get_attendance(doc):
 		attendance_data = attendance.json()
 		if attendance_data:
 			frappe.log_error("attendance data",attendance_data)
-			return fetch_teams_attendance_reports(doc['meeting_id'],attendance_data['value'][0]['id'])
+			att_report_id = attendance_data['value'][0]['id']
+			if not att_report_id:
+				frappe.throw("Attendance info isn't available yet. Check again later")
+			return fetch_teams_attendance_reports(doc['meeting_id'],att_report_id)
 		else:
 			return {"status":"pending","message":"Meeting not yet started"}
 	elif doc['platform'] == "Zoom":
