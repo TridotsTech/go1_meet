@@ -10,41 +10,8 @@ frappe.ui.form.on("Go1 Meet", {
         }
         console.log(searchParam.get("state"))
         const state = searchParam.get("state")
-        $('head').append(`
-            <style>
-            table.roundedCorners { 
-              border: 1px solid #d1d8dd;
-              border-radius: 13px; 
-              border-spacing: 0;
-              width: 100%;
-            }
-            table.roundedCorners td, 
-            table.roundedCorners th { 
-              border-right: 1px solid #d1d8dd;
-              border-bottom: 1px solid #d1d8dd;
-              padding: 10px; 
-            }
-            table.roundedCorners tr:last-child > td {
-              border-bottom: none;
-            }
-            table.roundedCorners tr > td:last-child, 
-            table.roundedCorners tr > th:last-child {
-              border-right: none;
-            }
-            table.roundedCorners tr:first-child th:first-child {
-              border-top-left-radius: 13px;
-            }
-            table.roundedCorners tr:first-child th:last-child {
-              border-top-right-radius: 13px;
-            }
-            table.roundedCorners tr:last-child td:first-child {
-              border-bottom-left-radius: 13px;
-            }
-            table.roundedCorners tr:last-child td:last-child {
-              border-bottom-right-radius: 13px;
-            }
-            </style>
-        `);
+        go1_meeting.meeting.append_attendance_styles()
+        go1_meeting.meeting.show_attendance(frm)
         let platform = frm.doc.platform
         if (!frm.doc.__islocal && !frm.doc.url && !frm.doc.__unsaved) {
             frm.add_custom_button(`Create ${platform} Meeting`, function () {
@@ -67,58 +34,7 @@ frappe.ui.form.on("Go1 Meet", {
         if (frm.doc.url && frm.doc.status != "Cancelled") {
             if (frm.doc.platform == "Teams" || frm.doc.platform == "Zoom") {
                 go1_meeting.meeting.call_edit_meeting(frm)
-                frm.add_custom_button("Fetch Attendence", function () {
-                    frappe.call({
-                        method: "go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.get_attendance",
-                        args: {
-                            "doc": frm.doc
-                        },
-                        freeze: true,
-                        freeze_message: "Fetching attendence",
-                        callback(r) {
-                            if (frm.doc.platform == "Zoom") {
-                                if (r.message) {
-                                    console.log(r.message)
-                                }
-                            }
-                            let format_html = `<table class="roundedCorners">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Mail</th>
-                                        <th>Duration</th>
-                                        <th>First join</th>
-                                        <th>Last join</th>
-                                        <th>Role</th>
-                                    </tr>`
-                            if (r.message) {
-                                console.log(r.message)
-                                if (r.message.status == "success") {
-                                    for (let i of r.message.data) {
-                                        let duration = i.duration.split(":")
-                                        format_html += `<tr>
-                                            <td>${i.name}</td>
-                                            <td>${i.email}</td>
-                                            <td>${(duration[0] > 0) ? duration[0] + "h " : ""}${(duration[1] > 0) ? duration[1] + "m " : ""}${(duration[2] > 0) ? duration[2] + "s" : ""}</td>
-                                            <td>${i.first_join}</td>
-                                            <td>${i.last_join}</td>
-                                            <td>${i.role}</td>
-                                        </tr>`
-                                    }
-                                    format_html += `</table>`
-                                    frm.fields_dict['attendance'].$wrapper.html(format_html)
-                                    frappe.show_alert({
-                                        message: "Attendence fetched successfully",
-                                        indicator: "green"
-                                    }, 5)
-                                }
-                            } else if (r.message.status == "pending") {
-                                console.log("penfing")
-                            } else {
-
-                            }
-                        }
-                    })
-                })
+                go1_meeting.meeting.fetch_attendace(frm)
             }
             frm.add_custom_button('Cancel Meeting', function () {
                 frappe.confirm("Do you need to cancel the meeting", () => {

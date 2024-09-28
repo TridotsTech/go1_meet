@@ -59,7 +59,7 @@ def _redirect_uri(doc):
         redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_callback')
         frappe.log_error("redirect_uri",redirect_uri)
         # Generate authorization URL
-        auth_url = msal_app.get_authorization_request_url(scopes, redirect_uri=redirect_uri)
+        auth_url = msal_app.get_authorization_request_url(scopes, redirect_uri=redirect_uri,state = doc['name'])
         frappe.log_error("auth_url",auth_url)
     elif doc['platform'] == "Zoom":
         client_id = frappe.db.get_value("Meeting Integration",{'platform':doc['platform']},['client_id'])
@@ -70,7 +70,7 @@ def _redirect_uri(doc):
     return auth_url
 
 @frappe.whitelist(allow_guest = True)
-def teams_oauth_callback(code = None):
+def teams_oauth_callback(code = None,state = None):
     if not code:
         frappe.throw("Authorization code not found")
     client_id , client_secret , tenant_id , scopes = get_teams_credentials()
@@ -78,6 +78,7 @@ def teams_oauth_callback(code = None):
     redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_callback')
     authority = f"https://login.microsoftonline.com/{tenant_id}"
     frappe.log_error("code",code)
+    frappe.log_error("state",state)
     msal_app = msal.ConfidentialClientApplication(
         client_id,
         authority=authority,
@@ -89,14 +90,10 @@ def teams_oauth_callback(code = None):
         redirect_uri=redirect_uri
     )
     frappe.log_error("token response",token_response)
-    # latest_doc = frappe.get_last_doc("Meeting Integration",{"platform":"Teams","owner":frappe.session.user})
-    # frappe.log_error("last doc",latest_doc )
-    # frappe.log_error("last d name",latest_doc.name)
     set_token_response(token_response,platform = "Teams")
-    # redirect_uri = frappe.utils.get_url('/api/method/go1_meeting.go1_meeting.integration.validation.teams_oauth_calback')
     frappe.log_error("token resp from microsoft",token_response)
     frappe.local.response["type"] = "redirect"
-    frappe.local.response["location"] = f"/app/go1-meet"
+    frappe.local.response["location"] = f"/app/go1-meet/{state}"
 
 @frappe.whitelist(allow_guest = True) 
 def zoom_oauth_callback(code = None):

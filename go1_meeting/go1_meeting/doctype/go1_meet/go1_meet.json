@@ -22,6 +22,13 @@
   "google_calendar",
   "url",
   "host_room_url",
+  "section_break_yxkw",
+  "from",
+  "start_date",
+  "column_break_ibhx",
+  "to",
+  "duration",
+  "end_date",
   "advance_options_section",
   "is_online_meeting",
   "registered_meeting",
@@ -32,33 +39,29 @@
   "record_type",
   "enable_video_for_participant",
   "mute_participants_upon_entry",
-  "section_break_yxkw",
-  "from",
-  "start_date",
-  "column_break_ibhx",
-  "to",
-  "duration",
-  "end_date",
   "section_break_vbrt",
   "participants",
   "external_participants",
   "meeting_id",
   "event_id",
   "attendance_tab",
-  "attendance"
+  "attendance",
+  "attendance_json"
  ],
  "fields": [
   {
    "fieldname": "platform",
    "fieldtype": "Select",
    "label": "Platform",
-   "options": "Teams\nGoogle Meet\nZoom\nWhereBy"
+   "options": "Teams\nGoogle Meet\nZoom\nWhereBy",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "depends_on": "eval:doc.platform == \"Zoom\" || doc.platform == \"Teams\" || doc.platform == \"Google Meet\"",
    "fieldname": "subject",
    "fieldtype": "Data",
-   "label": "Subject"
+   "label": "Subject",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "fieldname": "section_break_yxkw",
@@ -70,7 +73,8 @@
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "From",
-   "mandatory_depends_on": "eval:doc.platform==\"Teams\" || doc.platform==\"Zoom\" || doc.platform==\"Google Meet\""
+   "mandatory_depends_on": "eval:doc.platform==\"Teams\" || doc.platform==\"Zoom\" || doc.platform==\"Google Meet\"",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "fieldname": "column_break_ibhx",
@@ -82,7 +86,8 @@
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "To",
-   "mandatory_depends_on": "eval:doc.platform==\"Teams\" || doc.platform == \"Google Meet\""
+   "mandatory_depends_on": "eval:doc.platform==\"Teams\" || doc.platform == \"Google Meet\"",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "fieldname": "section_break_vbrt",
@@ -93,13 +98,15 @@
    "fieldtype": "Table",
    "label": "Participants",
    "mandatory_depends_on": "eval:doc.platform==\"Teams\" || doc.platform==\"Zoom\" || doc.platform==\"Google Meet\"",
-   "options": "Meeting Participant"
+   "options": "Meeting Participant",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "fieldname": "external_participants",
    "fieldtype": "Table",
    "label": "External Participants",
-   "options": "Meeting External Participant"
+   "options": "Meeting External Participant",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "fieldname": "column_break_nypf",
@@ -148,10 +155,10 @@
    "label": "Event Id"
   },
   {
-   "depends_on": "eval:doc.url",
+   "depends_on": "eval:doc.url && (doc.platform == \"Teams\" || doc.platform == \"Zoom\")",
    "fieldname": "attendance_tab",
    "fieldtype": "Tab Break",
-   "label": "Attendance"
+   "label": "Participants"
   },
   {
    "fieldname": "attendance",
@@ -162,61 +169,70 @@
    "depends_on": "eval:doc.platform==\"Zoom\" || doc.platform == \"Google Meet\"",
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "label": "Description"
+   "label": "Description",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "depends_on": "eval:doc.platform==\"Zoom\"",
    "fieldname": "duration",
    "fieldtype": "Duration",
    "label": "Duration",
-   "mandatory_depends_on": "eval:doc.platform==\"Zoom\""
+   "mandatory_depends_on": "eval:doc.platform==\"Zoom\"",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "default": "0",
    "depends_on": "eval:doc.platform==\"Zoom\" || doc.platform == \"WhereBy\"",
    "fieldname": "is_secured",
    "fieldtype": "Check",
-   "label": "is Secured"
+   "label": "is Secured",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "depends_on": "eval:doc.platform == \"Zoom\"",
    "fieldname": "passcode",
    "fieldtype": "Data",
-   "label": "Passcode"
+   "label": "Passcode",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "default": "0",
    "depends_on": "eval:doc.platform==\"Zoom\"",
    "fieldname": "generate_meeting_id",
    "fieldtype": "Check",
-   "label": "Generate meeting Id"
+   "label": "Generate meeting Id",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "depends_on": "eval:doc.platform==\"Zoom\"",
    "fieldname": "zoom_meeting_id",
    "fieldtype": "Data",
-   "label": "Meeting Id"
+   "label": "Meeting Id",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "default": "0",
    "depends_on": "eval:doc.platform==\"Zoom\"",
    "fieldname": "enable_video_for_host",
    "fieldtype": "Check",
-   "label": "Enable video for host"
+   "label": "Enable video for host",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "default": "0",
    "depends_on": "eval:doc.platform==\"Zoom\"",
    "fieldname": "enable_video_for_participant",
    "fieldtype": "Check",
-   "label": "Enable Video For Participant"
+   "label": "Enable Video For Participant",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "default": "0",
    "depends_on": "eval:doc.platform==\"Zoom\"",
    "fieldname": "mute_participants_upon_entry",
    "fieldtype": "Check",
-   "label": "Mute Participants Upon Entry"
+   "label": "Mute Participants Upon Entry",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "default": "0",
@@ -224,21 +240,24 @@
    "description": "Only users admitted by the host can join the meeting",
    "fieldname": "waiting_room",
    "fieldtype": "Check",
-   "label": "Waiting Room"
+   "label": "Waiting Room",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "default": "0",
    "depends_on": "eval: doc.platform==\"Zoom\"",
    "fieldname": "registered_meeting",
    "fieldtype": "Check",
-   "label": "Registered Meeting"
+   "label": "Registered Meeting",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "depends_on": "eval:doc.registered_meeting==1",
    "fieldname": "approval_for_registration",
    "fieldtype": "Select",
    "label": "Approval For Registration",
-   "options": "Auto\nManual"
+   "options": "Auto\nManual",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "fieldname": "host_room_url",
@@ -251,20 +270,23 @@
    "fieldname": "record_type",
    "fieldtype": "Select",
    "label": "Record Type",
-   "options": "None\nLocal\nCloud"
+   "options": "None\nLocal\nCloud",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "default": "Today",
    "depends_on": "eval:doc.platform==\"WhereBy\"",
    "fieldname": "start_date",
    "fieldtype": "Date",
-   "label": "Start Date"
+   "label": "Start Date",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "depends_on": "eval:doc.platform==\"WhereBy\"",
    "fieldname": "end_date",
    "fieldtype": "Date",
-   "label": "End Date"
+   "label": "End Date",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "depends_on": "eval:doc.platform==\"WhereBy\"",
@@ -272,7 +294,8 @@
    "fieldname": "room_type",
    "fieldtype": "Select",
    "label": "Room Type",
-   "options": "Normal\nGroup"
+   "options": "Normal\nGroup",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "depends_on": "eval:doc.platform == \"WhereBy\"",
@@ -291,7 +314,8 @@
    "fieldname": "g_calendar_id",
    "fieldtype": "Data",
    "hidden": 1,
-   "label": "Calendar Id"
+   "label": "Calendar Id",
+   "read_only_depends_on": "eval:doc.url"
   },
   {
    "fieldname": "advance_options_section",
@@ -301,11 +325,16 @@
   {
    "fieldname": "column_break_uqil",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "attendance_json",
+   "fieldtype": "JSON",
+   "label": "Attendance JSON"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-26 17:58:11.654893",
+ "modified": "2024-09-28 14:45:42.284114",
  "modified_by": "Administrator",
  "module": "Go1 Meeting",
  "name": "Go1 Meet",

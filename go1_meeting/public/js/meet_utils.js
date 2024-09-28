@@ -7,7 +7,7 @@ go1_meeting.meeting.auth_callback = function (frm, r) {
     } else if (frm.doc.platform == "Google Meet") {
         this.google_meet_callback(frm, r)
     } else if (frm.doc.platform == "WhereBy") {
-        this.whereby_callback(frm,r)
+        this.whereby_callback(frm, r)
     }
 
 }
@@ -39,7 +39,7 @@ go1_meeting.meeting.call_cancel = function (frm, r) {
     }
     this.cancel_meeting(frm, args)
 }
-go1_meeting.meeting.cancel_meeting = function(frm,args){
+go1_meeting.meeting.cancel_meeting = function (frm, args) {
     frappe.call({
         method: "go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.cancel_event",
         args: args,
@@ -111,8 +111,8 @@ go1_meeting.meeting.zoom_meeting_callback = function (frm, r) {
                             frm.set_value("zoom_meeting_id", r.message.id)
                         }
                         frm.set_value("url", r.message.join_url)
-                        frm.set_value("host_room_url",r.message.start_url)
-                        frm.set_value("status","Scheduled")
+                        frm.set_value("host_room_url", r.message.start_url)
+                        frm.set_value("status", "Scheduled")
                         frm.save()
                     }
                 }
@@ -222,7 +222,8 @@ go1_meeting.meeting.call_edit_meeting = function (frm) {
                         "to_time": value.to_time,
                         "subject": value.subject,
                         "event_id": frm.doc.event_id,
-                        "meeting_id": frm.doc.meeting_id
+                        "meeting_id": frm.doc.meeting_id,
+                        "doc": frm.doc
                     }
                 } else if (frm.doc.platform == "Zoom") {
                     args = {
@@ -244,7 +245,7 @@ go1_meeting.meeting.call_edit_meeting = function (frm) {
     }, __("Actions"))
 }
 
-go1_meeting.meeting.edit_meeting = function(frm,args,d){
+go1_meeting.meeting.edit_meeting = function (frm, args, d) {
     frappe.call({
         method: "go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.edit_meeting",
         args: args,
@@ -270,58 +271,150 @@ go1_meeting.meeting.edit_meeting = function(frm,args,d){
     })
 }
 
-go1_meeting.meeting.join_meeting = function(frm){
-    if(frm.doc.platform == "WhereBy" && frm.doc.host_room_url && frm.doc.status != "Cancelled"){
+go1_meeting.meeting.join_meeting = function (frm) {
+    if (frm.doc.platform == "WhereBy" && frm.doc.host_room_url && frm.doc.status != "Cancelled") {
         frm.add_custom_button("Join Meeting", function () {
-            window.open(`/app/whereby-embed?meeting_id=${frm.doc.host_room_url}`,'_blank')
+            window.open(`/app/whereby-embed?meeting_id=${frm.doc.host_room_url}`, '_blank')
         })
     }
 }
 
-//Attendance API Call
-        // if (frm.doc.url && frm.doc.platform =="Teams" && frm.doc.status != "Cancelled") {
-        //     frappe.call({
-        //         method: "go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.get_attendance",
-        //         args: {
-        //             "doc": frm.doc
-        //         },
-        //         // freeze: true,
-        //         // freeze_message: "Fetching attendence",
-        //         callback(r) {
-        //             let format_html = `<table class="roundedCorners">
-        //                     <tr>
-        //                         <th>Name</th>
-        //                         <th>Mail</th>
-        //                         <th>Duration</th>
-        //                         <th>First join</th>
-        //                         <th>Last join</th>
-        //                         <th>Role</th>
-        //                     </tr>`
-        //             if (r.message) {
-        //                 console.log(r.message)
-        //                 if (r.message.status == "success") {
-        //                     for (let i of r.message.data) {
-        //                         let duration = i.duration.split(":")
-        //                         format_html += `<tr>
-        //                             <td>${i.name}</td>
-        //                             <td>${i.email}</td>
-        //                             <td>${(duration[0] > 0) ? duration[0] + "h " : ""}${(duration[1] > 0) ? duration[1] + "m " : ""}${(duration[2] > 0) ? duration[2] + "s" : ""}</td>
-        //                             <td>${i.first_join}</td>
-        //                             <td>${i.last_join}</td>
-        //                             <td>${i.role}</td>
-        //                         </tr>`
-        //                     }
-        //                     format_html += `</table>`
-        //                     frm.fields_dict['attendance'].$wrapper.html(format_html)
-        //                     // frappe.show_alert({
-        //                     //     message: "Attendence fetched successfully",
-        //                     //     indicator: "green"  
-        //                     // }, 5)
-        //                 }
-        //             } else {
-        //                 format_html = "<div>"
-        //                 frm.fields_dict['attendance'].$wrapper.html(format_html)
-        //             }
-        //         }
-        //     })
-        // }
+go1_meeting.meeting.append_attendance_styles = function () {
+    $('head').append(`
+        <style>
+        table.roundedCorners { 
+          border: 1px solid #d1d8dd;
+          border-radius: 13px; 
+          border-spacing: 0;
+          width: 100%;
+        }
+        table.roundedCorners td, 
+        table.roundedCorners th { 
+          border-right: 1px solid #d1d8dd;
+          border-bottom: 1px solid #d1d8dd;
+          padding: 10px; 
+        }
+        table.roundedCorners tr:last-child > td {
+          border-bottom: none;
+        }
+        table.roundedCorners tr > td:last-child, 
+        table.roundedCorners tr > th:last-child {
+          border-right: none;
+        }
+        table.roundedCorners tr:first-child th:first-child {
+          border-top-left-radius: 13px;
+        }
+        table.roundedCorners tr:first-child th:last-child {
+          border-top-right-radius: 13px;
+        }
+        table.roundedCorners tr:last-child td:first-child {
+          border-bottom-left-radius: 13px;
+        }
+        table.roundedCorners tr:last-child td:last-child {
+          border-bottom-right-radius: 13px;
+        }
+        </style>
+    `);
+}
+go1_meeting.meeting.fetch_attendace = function (frm) {
+    if ((frm.doc.platform == "Zoom" || frm.doc.platform == "Teams") && frm.doc.status != "Cancelled") {
+        frm.add_custom_button("Fetch Participants", function () {
+            frappe.call({
+                method: "go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.get_attendance",
+                args: {
+                    "doc": frm.doc
+                },
+                freeze: true,
+                freeze_message: "Fetching attendence",
+                callback(r) {
+                    if (r.message) {
+                        console.log(r.message)
+                        if (r.message.status == "success") {
+                            frm.set_value("attendance_json", JSON.stringify(r.message.data))
+                            frm.save()
+                            frappe.show_alert({
+                                message: "Attendence fetched successfully",
+                                indicator: "green"
+                            }, 5)
+                        }
+                    }
+                }
+            })
+        })
+    }
+}
+
+go1_meeting.meeting.show_attendance = function (frm) {
+    if ((frm.doc.platform == "Zoom" || frm.doc.platform == "Teams") && frm.doc.status != "Cancelled") {
+        let format_html = ""
+        if (frm.doc.attendance_json && frm.doc.platform == "Teams") {
+            let data = JSON.parse(frm.doc.attendance_json)
+            if (data.length > 0) {
+                frm.set_df_property("attendance", "options", "")
+                format_html = `<table class="roundedCorners">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Mail</th>
+                                    <th>Duration</th>
+                                    <th>First Join</th>
+                                    <th>Last Leave</th>
+                                    <th>Role</th>
+                                </tr>`
+                for (let i of JSON.parse(frm.doc.attendance_json)) {
+                    let duration = i.duration.split(":")
+                    format_html += `<tr>
+                        <td>${i.name}</td>
+                        <td>${i.email}</td>
+                        <td>${(duration[0] > 0) ? duration[0] + "h " : ""}${(duration[1] > 0) ? duration[1] + "m " : ""}${(duration[2] > 0) ? duration[2] + "s" : ""}</td>
+                        <td>${i.first_join}</td>
+                        <td>${i.last_join}</td>
+                        <td>${i.role}</td>
+                    </tr>`
+                }
+                format_html += `</table>`
+                frm.fields_dict['attendance'].$wrapper.html(format_html)
+            } else {
+
+                let dummy_data = `<div style="min-height:350px;display:flex;align-items:center;justify-content:center;"><h5><i class="fa fa-history" style="font-size:18px;"></i> No Attendance....</h5></div>`
+                frm.set_df_property("attendance", "options", dummy_data)
+                frm.refresh_field("attendance")
+            }
+        }
+
+        if (format_html.length == 0) {
+            if (frm.doc.platform == "Zoom" && frm.doc.attendance_json) {
+                let data = JSON.parse(frm.doc.attendance_json)
+                if (data.length > 0 || frm.doc.attendance_json) {
+                    frm.set_df_property("attendance", "options", "")
+                    let teams_format_html = `<table class="roundedCorners">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Mail</th>
+                                    <th>Duration</th>
+                                    <th>First join</th>
+                                    <th>Last join</th>
+                                    <th>Role</th>
+                                </tr>`
+                    for (let i of JSON.parse(frm.doc.attendance_json)) {
+                        let duration = i.duration.split(":")
+                        teams_format_html += `<tr>
+                        <td>${i.name}</td>
+                        <td>${i.email}</td>
+                        <td>${(duration[0] > 0) ? duration[0] + "h " : ""}${(duration[1] > 0) ? duration[1] + "m " : ""}${(duration[2] > 0) ? duration[2] + "s" : ""}</td>
+                        <td>${i.first_join}</td>
+                        <td>${i.last_join}</td>
+                        <td>${i.role}</td>
+                    </tr>`
+                    }
+                    teams_format_html += `</table>`
+                    frm.fields_dict['attendance'].$wrapper.html(teams_format_html)
+                }
+            } else {
+                console.log("working in zoom else")
+                let dummy_data = `<div style="min-height:350px;display:flex;align-items:center;justify-content:center;"><h5><i class="fa fa-history" style="font-size:18px;"></i> No Attendance....</h5></div>`
+                frm.set_df_property("attendance", "options", dummy_data)
+                frm.refresh_field("attendance")
+            }
+        }
+    }
+}

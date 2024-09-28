@@ -1,0 +1,68 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"SYkyBT86tN\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Go1 Meeting</span>\",\"col\":12}},{\"id\":\"w0BmP3i1y8\",\"type\":\"card\",\"data\":{\"card_name\":\"Integration\",\"col\":4}},{\"id\":\"C3dRqPcdFW\",\"type\":\"card\",\"data\":{\"card_name\":\"Meeting\",\"col\":4}}]",
+ "creation": "2024-09-28 12:21:31.145424",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "dot-horizontal",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Go1 Meeting",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Integration",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Meeting Integration",
+   "link_count": 0,
+   "link_to": "Meeting Integration",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Meeting",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Meeting",
+   "link_count": 0,
+   "link_to": "Go1 Meet",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2024-09-28 12:25:58.039626",
+ "modified_by": "Administrator",
+ "module": "Go1 Meeting",
+ "name": "Go1 Meeting",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 28.0,
+ "shortcuts": [],
+ "title": "Go1 Meeting"
+}

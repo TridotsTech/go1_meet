@@ -317,9 +317,9 @@ def get_attendance(doc):
 			url = f"https://graph.microsoft.com/v1.0/me/onlineMeetings/{doc['meeting_id']}/attendanceReports",
 			headers = headers
 		)
+		attendance_data = attendance.json()
 		if attendance_data:
-			attendance_data = attendance.json()
-			# frappe.log_error("attendance data",[meeting_id,attendance_data])
+			frappe.log_error("attendance data",attendance_data)
 			return fetch_teams_attendance_reports(doc['meeting_id'],attendance_data['value'][0]['id'])
 		else:
 			return {"status":"pending","message":"Meeting not yet started"}
@@ -364,10 +364,8 @@ def fetch_zoom_attendance_report(doc,page_size = 300):
 			frappe.log_error("att rec",attendance.text)
 			return {"status":"success","data":attendance.json()}
 		elif attendance.status_code == 400:
-			return{
-				"status":"success",
-				"message":"Only available for Paid or ZMP account"
-			}
+			frappe.throw("""Check whether necessary permissionss has given or
+				 Only available for Paid or ZMP account""")
 
 @frappe.whitelist()
 def create_zoom_meeting(token , doc):
@@ -418,9 +416,9 @@ def create_whereby_room(doc):
 		doc = json.loads(doc)
 		if doc['room_prefix']:
 			room_prefix = doc['room_prefix'].lower()
-			room_prefix_formatted = re.sub(r'[_\s]+', '-', room_prefix)  # Replace spaces/underscores with hyphen
-			room_prefix_formatted = re.sub(r'[^\w-]', '', room_prefix_formatted)  
-	# frappe.log_error('room_prefix_formatted',room_prefix_formatted)
+			# Replace spaces/underscores with hyphen
+			room_prefix_formatted = re.sub(r'[_\s]+', '-', room_prefix)  
+			room_prefix_formatted = re.sub(r'[^\w-]', '', room_prefix_formatted)
 	where_doc = frappe.get_doc("Meeting Integration",{"platform":doc['platform']})
 	headers = {"Authorization": f"Bearer {where_doc.get('api_key')}",
 				"Content-Type":"application/json"}	
@@ -441,9 +439,9 @@ def create_whereby_room(doc):
 	frappe.log_error("where post",response.status_code)
 	frappe.log_error("where json",response.json())
 	if response.status_code != 201:
-		# frappe.log_error
 		frappe.throw(response.json())['error']
 	if response.status_code == 201:
+		send_mail_notification(response.json(),doc)
 		return {
 			"status":"success",
 			"data":response.json()
@@ -511,12 +509,17 @@ def create_google_meet(doc):
 #Send mail notification for whereby and Zoom
 def send_mail_notification(data,doc):
 	if doc['platform'] == "Zoom":
-		data , recipients = compose_zoom_mail(data,doc)
+		data , recipients = compose_zoom_notification(data,doc)
+		frappe.log_error("data",data)
+		frappe.log_error("receipients",recipients)
+
+	elif doc['platform'] == "WhereBy":
+		data, recipients = compose_whereby_notification(data,doc)
 		frappe.log_error("data",data)
 		frappe.log_error("receipients",recipients)
 	frappe.sendmail(recipients = recipients,message = data,subject = f"{doc['platform']} meeting invitation")
 
-def compose_zoom_mail(data,doc):
+def compose_zoom_notification(data,doc):
 	participants=[]
 	for i in doc['participants']:
 		participants.append(i.get('user'))
@@ -529,16 +532,36 @@ def compose_zoom_mail(data,doc):
 	formatted_time = local_time.strftime('%b %d,%Y %I:%M %p')
 	message=f"""
 	<p>{name} is inviting you to a scheduled Zoom Meeting.</p>
-	<br><br>
-	<p>Topic: {data['topic']}</p>
 	<br>
+	<p>Topic: {data['topic']}</p>
 	<p>Time: {formatted_time} </p>
 	<br>
 	<p>Join Zoom Meeting</p>
-	<br>{data['join_url']}
+	<a href="{data['join_url']}">{data['join_url']}</a>
 	<br><br>
 	<p>Meeting ID:{data['id']}</p>
-	<br>
 	<p>Passcode:{data['password']}</p>"""
 	frappe.log_error("mail content",message)
 	return message , participants
+
+
+def compose_whereby_notification(data,doc):
+	participants=[]
+	for i in doc['participants']:
+		participants.append(i.get('user'))
+	if doc['external_participants']:
+		for i in doc['external_participants']:
+			frappe.log_error("i",type(i))
+			participants.append(i['email'])
+	name = frappe.db.get_value("User",frappe.session.user,"full_name")
+	local_time = datetime.strptime(convert_utc_to_local(data['start_time']),"%Y-%m-%d %H:%M:%S")
+	formatted_time = local_time.strftime('%b %d,%Y %I:%M %p')
+	message=f"""
+	<p>{name} is inviting you to a scheduled Whereby Meeting.</p>
+	<br>
+	<p>Topic: {data['topic']}</p>
+	<p>Time: {formatted_time} </p>
+	<br>
+	<p>Join Whereby Meeting</p>
+	<a href="{data['join_url']}">{data['join_url']}</a>"""
+	return message,participants
