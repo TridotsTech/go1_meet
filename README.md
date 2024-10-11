@@ -4,7 +4,7 @@ Schedule Meeting using various platform like Teams, Zoom , Google Meet and Where
 
 ## Installation
 
-1. [Install Bench]("https://github.com/frappe/bench").
+1. [Install Bench](https://github.com/frappe/bench).
 2. Install app on bench
 ```
 bench get-app https://github.com/TridotsTech/go1_meet.git
