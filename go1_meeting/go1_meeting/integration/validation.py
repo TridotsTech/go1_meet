@@ -172,6 +172,10 @@ def authorize_user_access_token(doc):
         else:
             return {"status":"authorized"}
     if doc['platform'] == "Google Meet":
+        if doc['doctype'] == "Go1 Meet":
+            gdoc = frappe.db.exists("Meeting Integration",{"platform":"Google Meet"})
+            if not gdoc:
+                frappe.throw("Enter Credentials for Google Meet in Meeting Integration")
         if doc['doctype'] == "Meeting Integration":
             return authorize_google(doc)
         return validate_gmeet_user(doc)

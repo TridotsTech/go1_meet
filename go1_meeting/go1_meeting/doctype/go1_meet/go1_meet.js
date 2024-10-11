@@ -4,12 +4,6 @@
 frappe.ui.form.on("Go1 Meet", {
     refresh(frm) {
         const searchParam = new URLSearchParams(window.location.search)
-        console.log(searchParam.has("state"))
-        if (searchParam.has("state")) {
-            console.log("working...")
-        }
-        console.log(searchParam.get("state"))
-        const state = searchParam.get("state")
         go1_meeting.meeting.append_attendance_styles()
         go1_meeting.meeting.show_attendance(frm)
         let platform = frm.doc.platform
