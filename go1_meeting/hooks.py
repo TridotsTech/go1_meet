@@ -133,11 +133,23 @@ app_include_js = "/assets/go1_meeting/js/meet_utils.js"
 # Scheduled Tasks
 # ---------------
 
-scheduler_events = {
-	"hourly": [
-		"go1_meeting.go1_meeting.doctype.meeting_integration.meeting_integration.update_missed_teams_meetings"
-	],
-}
+# scheduler_events = {
+# 	"all": [
+# 		"go1_meeting.tasks.all"
+# 	],
+# 	"daily": [
+# 		"go1_meeting.tasks.daily"
+# 	],
+# 	"hourly": [
+# 		"go1_meeting.tasks.hourly"
+# 	],
+# 	"weekly": [
+# 		"go1_meeting.tasks.weekly"
+# 	],
+# 	"monthly": [
+# 		"go1_meeting.tasks.monthly"
+# 	],
+# }
 
 # Testing
 # -------
