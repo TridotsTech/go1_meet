@@ -145,7 +145,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "\nDraft\nScheduled\nCompleted\nMissed\nCancelled",
+   "options": "\nDraft\nScheduled\nCancelled",
    "read_only": 1
   },
   {
@@ -360,14 +360,6 @@
   {
    "color": "Green",
    "title": "Scheduled"
-  },
-  {
-   "color": "Blue",
-   "title": "Completed"
-  },
-  {
-   "color": "Orange",
-   "title": "Missed"
   },
   {
    "color": "Red",
