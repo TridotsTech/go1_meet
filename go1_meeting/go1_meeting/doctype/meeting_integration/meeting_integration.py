@@ -387,7 +387,7 @@ def update_missed_teams_meetings():
 			"to": ["<",now],
 			"meeting_id": ["is","set"]
 		},
-		fields = ["name","meeting_id","owner"]
+		fields = ["*"]
 	)
 	for meeting in meetings:
 		try:
