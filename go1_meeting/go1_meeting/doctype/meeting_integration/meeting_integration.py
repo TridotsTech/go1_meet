@@ -184,13 +184,15 @@ def cancel_event(event_id,platform,doc = None):
 	if response.status_code == 204:
 		return {"status":"success"}
 
-def get_headers():
-	access_token = frappe.db.get_value("User Platform Credentials",{"user":frappe.session.user,"platform":"Teams"},['access_token'])
+def get_headers(user = None):
+	user = user or frappe.session.user
+	access_token = frappe.db.get_value("User Platform Credentials",{"user":user,"platform":"Teams"},['access_token'])
 	if access_token:
 		headers = {"Authorization": "Bearer " + access_token}
 		return headers
-	frappe.throw(f"{frappe.session.user} is not authorized to access this resource")
-def validate_user_credentials(headers, is_updated = None):
+	frappe.throw(f"{user} is not authorized to access this resource")
+def validate_user_credentials(headers, is_updated = None, user = None):
+	user = user or frappe.session.user
 	user_directory = get_users(headers)
 	frappe.log_error("user_directory_if",user_directory.status_code)
 
@@ -199,11 +201,11 @@ def validate_user_credentials(headers, is_updated = None):
 	else:
 		# frappe.log_error("user_directory if js",user_directory.json())
 		refresh_token = frappe.db.get_value("User Platform Credentials",
-				{"user":frappe.session.user,"platform":"Teams"},['refresh_token'])
+				{"user":user,"platform":"Teams"},['refresh_token'])
 		frappe.log_error("teams ref tk",refresh_token)
 		token_response = create_access_token_from_refresh_token("Teams",refresh_token)
 		if "access_token" in token_response:
-			exist = frappe.db.exists("User Platform Credentials",{"user":frappe.session.user,"platform":"Teams"})
+			exist = frappe.db.exists("User Platform Credentials",{"user":user,"platform":"Teams"})
 			if exist:
 				frappe.db.set_value("User Platform Credentials",exist,{
 					"access_token":token_response['access_token'],
@@ -353,6 +355,48 @@ def fetch_teams_attendance_reports(meeting_id,attendance_report_id):
 			'role': i['role']
 		})
 	return {"status":"success","data":data}
+
+def get_teams_meeting_duration(meeting_id,user = None):
+	from dateutil.parser import isoparse
+	headers = get_headers(user = user)
+	validate = validate_user_credentials(headers = headers, user = user)
+	if validate.get("directory"):
+		if validate.get("is_updated"):
+			headers = get_headers(user = user)
+	response = requests.get(
+		url = f"https://graph.microsoft.com/v1.0/me/onlineMeetings/{meeting_id}/attendanceReports",
+		headers = headers
+	)
+	frappe.log_error("attendance report status for missed check",response.status_code)
+	if response.status_code == 200:
+		reports = response.json().get("value")
+		if reports:
+			report = reports[0]
+			start_time = isoparse(report['meetingStartDateTime'])
+			end_time = isoparse(report['meetingEndDateTime'])
+			return (end_time - start_time).total_seconds()
+	return 0
+
+@frappe.whitelist()
+def update_missed_teams_meetings():
+	now = frappe.utils.now_datetime()
+	meetings = frappe.get_all("Go1 Meet",
+		filters = {
+			"platform": "Teams",
+			"status": "Scheduled",
+			"to": ["<",now],
+			"meeting_id": ["is","set"]
+		},
+		fields = ["name","meeting_id","owner"]
+	)
+	for meeting in meetings:
+		try:
+			duration = get_teams_meeting_duration(meeting.meeting_id,user = meeting.owner)
+			status = "Completed" if duration and duration > 0 else "Missed"
+			frappe.db.set_value("Go1 Meet",meeting.name,"status",status)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(),f"Failed to update missed status for {meeting.name}")
+	frappe.db.commit()
 
 def fetch_zoom_attendance_report(doc,page_size = 300):
 	auth_response = authorize_zoom(doc)
