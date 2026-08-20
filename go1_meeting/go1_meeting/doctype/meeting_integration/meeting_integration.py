@@ -58,6 +58,8 @@ def create_teams_meeting(internal_attendees,external_attendees,from_time,to_time
 			frappe.log_error("join_url",join_url)
 			
 			return create_calender_event(meeting_response , headers , internal_attendees , external_attendees,user_directory,subject = subject )
+		frappe.log_error("teams meeting creation failed",response.text)
+		frappe.throw("Unable to create the Teams meeting. Please try again or reconnect your Teams account.")
 
 def create_calender_event(data,headers,internal_attendees,external_attendees,user_directory,subject = None):
 	people = []
@@ -196,26 +198,32 @@ def validate_user_credentials(headers, is_updated = None):
 
 	if user_directory.status_code == 200:
 		return {'directory':user_directory.json()['value']}
-	else:
-		# frappe.log_error("user_directory if js",user_directory.json())
-		refresh_token = frappe.db.get_value("User Platform Credentials",
-				{"user":frappe.session.user,"platform":"Teams"},['refresh_token'])
-		frappe.log_error("teams ref tk",refresh_token)
-		token_response = create_access_token_from_refresh_token("Teams",refresh_token)
-		if "access_token" in token_response:
-			exist = frappe.db.exists("User Platform Credentials",{"user":frappe.session.user,"platform":"Teams"})
-			if exist:
-				frappe.db.set_value("User Platform Credentials",exist,{
-					"access_token":token_response['access_token'],
-					"refresh_token":token_response['refresh_token']
-				})
-				frappe.db.commit()
-			access_token = token_response['access_token']
-			headers = {"Authorization": "Bearer " + access_token}
-			is_updated = 1
-			updated_directory = get_users(headers)
-		if is_updated:
-			return {'directory':updated_directory.json()['value'],"is_updated":1}
+
+	refresh_token = frappe.db.get_value("User Platform Credentials",
+			{"user":frappe.session.user,"platform":"Teams"},['refresh_token'])
+	frappe.log_error("teams ref tk",refresh_token)
+	if not refresh_token:
+		frappe.throw(f"{frappe.session.user} is not authorized to access Teams. Please connect your Teams account again.")
+
+	token_response = create_access_token_from_refresh_token("Teams",refresh_token) or {}
+	if "access_token" not in token_response:
+		frappe.log_error("teams token refresh failed",token_response)
+		frappe.throw("Your Teams session has expired. Please connect your Teams account again.")
+
+	exist = frappe.db.exists("User Platform Credentials",{"user":frappe.session.user,"platform":"Teams"})
+	if exist:
+		frappe.db.set_value("User Platform Credentials",exist,{
+			"access_token":token_response['access_token'],
+			"refresh_token":token_response.get('refresh_token') or refresh_token
+		})
+		frappe.db.commit()
+	headers = {"Authorization": "Bearer " + token_response['access_token']}
+	updated_directory = get_users(headers)
+	if updated_directory.status_code != 200:
+		frappe.log_error("teams user directory failed",updated_directory.text)
+		frappe.throw("Unable to fetch Teams users. Please connect your Teams account again.")
+
+	return {'directory':updated_directory.json()['value'],"is_updated":1}
 
 def get_users(headers):
 	user_directory = requests.get(
